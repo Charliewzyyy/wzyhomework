@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% block head %}
+    <meta charset="UTF-8">
+    {# meta会设置页面的视口，让页面根据设备的宽度来自动缩放页面，让移动设备拥有更好的浏览体验 #}
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ user.name }}'s Watchlist</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.jpg') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" type="text/css">
+    {% endblock %}
+</head>
+<body>
+    {# 获取flash提示消息并显示 #}
+    {% for message in get_flashed_messages() %}
+        <div class="alert">{{ message }}</div>
+    {% endfor %}
+    <h2>
+        <img alt="Avatar" class="avatar" src="{{ url_for('static', filename='images/avatar(2).jpg') }}">
+        {{ user.name }}'s Watchlist
+    </h2>
+    {# 新的页面添加了一个导航栏 #}
+    <nav>
+        <ul>
+            <li><a href="{{ url_for('index') }}">Home</a></li>
+            {# 如果用户已经登录，就显示设置和登出链接，否则显示登录链接 #}
+            {% if current_user.is_authenticated %}
+            <li><a href="{{ url_for('settings') }}">Settings</a></li>
+            <li><a href="{{ url_for('logout') }}">Logout</a></li>
+            {% else %}
+            <li><a href="{{ url_for('login') }}">Login</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% block content %}{% endblock %}
+    <img alt="CLANNAD~AFTER STORY~" class="clannad" src="{{ url_for('static', filename='images/clannad.jpg') }}" title="Tomoya Nagisa & Ushio">
+<!--    <footer>-->
+<!--        <small>&copy; 2018 <a href="http://helloflask.com/tutorial">HelloFlask</a></small>-->
+<!--    </footer>-->
+</body>
+</html>

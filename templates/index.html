@@ -1,0 +1,68 @@
+{# 继承基模板的主页模板 #}
+{% extends 'base.html' %}
+
+{% block content %}
+<p>{{ movies|length }} Titles</p>
+{# 添加创建新条目表单 #}
+{% if current_user.is_authenticated %}
+<form method="post">
+    Name <input type="text" name="title" autocomplete="off" required>
+    Year <input type="text" name="year" autocomplete="off" required>
+    {# autocomplete=“off”：关闭自动完成（按下输入框不显示历史输入记录）#}
+    {# required:若用户没有输入内容就按下了提交按钮，浏览器会显示错误提示 #}
+    <input class="btn" type="submit" name="submit" value="Add">
+</form>
+{% endif %}
+
+<ul class="movie-list">
+    {% for movie in movies %}
+    <li>{{ movie.title }} - {{ movie.year }}
+        <span class="float-right">
+            {% if current_user.is_authenticated %}
+            {# 编辑电影条目的链接 #}
+            <a class="btn" href="{{ url_for('edit', movie_id=movie.id) }}">Edit</a>
+            {# 删除电影条目表单 #}
+            <form class="inline-form" method="post" action="{{ url_for('.delete', movie_id=movie.id) }}">
+                <input class="btn" type="submit" name="delete" value="Delete" onclick="return confirm('Are you sure?')">
+            </form>
+            {% endif %}
+            <a class="imdb" href="https://www.imdb.com/find?q={{movie.title }}" target="_blank" title="Find this movie on IMDb">IMDb</a>
+        </span>
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}
+
+
+
+<!--<!DOCTYPE html>-->
+<!--<html lang="en">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <title>{{ user.name }}'s Watchlist</title>-->
+<!--    <link rel="icon" href="{{ url_for('static', filename='favicon.jpg') }}">-->
+<!--    {# 添加网站头像 #}-->
+<!--    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" type="text/css">-->
+<!--    {# 引入 CSS 文件 #}-->
+<!--</head>-->
+<!--<body>-->
+<!--    <h2>-->
+<!--        <img alt="Avatar" class="avatar" src="{{ url_for('static', filename='images/avatar(2).jpg') }}">-->
+<!--        {{ user.name }}'s Watchlist-->
+<!--    </h2>-->
+<!--    {# 使用 length 过滤器获取 movies 变量的长度 #}-->
+<!--    <p>{{ movies|length }} Titles</p>-->
+<!--    <ul class="movie-list">-->
+<!--        {% for movie in movies %}-->
+<!--        {# 迭代 movies 变量 #}-->
+<!--        <li>{{ movie.title }} - {{ movie.year }}</li>-->
+<!--        {# 等同于 movie['title'] #}-->
+<!--        {% endfor %}-->
+<!--        {# 使用 endfor 标签结束 for 语句 #}-->
+<!--    </ul>-->
+<!--    <img alt="Walking Totoro" class="clannad" src="{{ url_for('static', filename='images/clannad.jpg') }}">-->
+<!--&lt;!&ndash;    <footer>&ndash;&gt;-->
+<!--&lt;!&ndash;        <small>&copy; 2018 <a href="http://helloflask.com/tutorial">HelloFlask</a></small>&ndash;&gt;-->
+<!--&lt;!&ndash;    </footer>&ndash;&gt;-->
+<!--</body>-->
+<!--</html>-->
