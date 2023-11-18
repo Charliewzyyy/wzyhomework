@@ -1,9 +1,9 @@
 import unittest
 from flask import current_app
-# from app import app, db, Movie, User, forge, initdb
-from wzyhomework import app, db
-from wzyhomework.models import Movie, User
-from wzyhomework.commands import forge, initdb
+from app import app, db, Movie, User, forge, initdb
+# from wzyhomework import app, db
+# from wzyhomework.models import Movie, User
+# from wzyhomework.commands import forge, initdb
 
 class WatchlistTestCase(unittest.TestCase):
     def setUp(self):

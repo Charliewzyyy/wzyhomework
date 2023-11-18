@@ -2,15 +2,15 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<p>{{ movies|length }} Titles</p>
+<p>总计有{{ movies|length }}部电影</p>
 {# 添加创建新条目表单 #}
 {% if current_user.is_authenticated %}
 <form method="post">
-    Name <input type="text" name="title" autocomplete="off" required>
-    Year <input type="text" name="year" autocomplete="off" required>
+    电影名称 <input type="text" name="title" autocomplete="off" required>
+    上映时间 <input type="text" name="year" autocomplete="off" required>
     {# autocomplete=“off”：关闭自动完成（按下输入框不显示历史输入记录）#}
     {# required:若用户没有输入内容就按下了提交按钮，浏览器会显示错误提示 #}
-    <input class="btn" type="submit" name="submit" value="Add">
+    <input class="btn" type="submit" name="submit" value="添加">
 </form>
 {% endif %}
 
@@ -20,13 +20,14 @@
         <span class="float-right">
             {% if current_user.is_authenticated %}
             {# 编辑电影条目的链接 #}
-            <a class="btn" href="{{ url_for('edit', movie_id=movie.id) }}">Edit</a>
+            <a class="btn" href="{{ url_for('edit', movie_id=movie.id) }}">编辑</a>
             {# 删除电影条目表单 #}
             <form class="inline-form" method="post" action="{{ url_for('.delete', movie_id=movie.id) }}">
-                <input class="btn" type="submit" name="delete" value="Delete" onclick="return confirm('Are you sure?')">
+                <input class="btn" type="submit" name="delete" value="删除" onclick="return confirm('您确定要删除吗？')">
             </form>
             {% endif %}
-            <a class="imdb" href="https://www.imdb.com/find?q={{movie.title }}" target="_blank" title="Find this movie on IMDb">IMDb</a>
+            <a class="imdb" href="https://movie.douban.com/subject_search?search_text={{ movie.title }}" target="_blank" title="在 豆瓣网 中查询该电影">豆瓣网</a>
+<!--            <a class="imdb" href="https://www.imdb.com/find?q={{movie.title }}" target="_blank" title="Find this movie on IMDb">IMDb</a>-->
         </span>
     </li>
     {% endfor %}

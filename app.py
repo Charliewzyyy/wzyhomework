@@ -166,14 +166,14 @@ def edit(movie_id):
         year = request.form['year']
 
         if not title or not year or len(year) > 4 or len(title) > 60:
-            flash('Invalid input.')
+            flash('输入错误！')
             return redirect(url_for('edit', movie_id=movie_id))
             # 重定向回对应的编辑页面
 
         movie.title = title  # 更新标题
         movie.year = year  # 更新年份
         db.session.commit()  # 提交数据库会话
-        flash('Item updated.')
+        flash('电影条目成功更新~')
         return redirect(url_for('index'))  # 重定向回主页
 
     return render_template('edit.html', movie=movie)  # 传入被编辑的电影记录
@@ -186,7 +186,7 @@ def delete(movie_id):
     movie = Movie.query.get_or_404(movie_id)  # 获取电影记录
     db.session.delete(movie)  # 删除对应的记录
     db.session.commit()  # 提交数据库会话
-    flash('Item deleted.')
+    flash('电影条目成功删除~')
     return redirect(url_for('index'))  # 重定向回主页
 
 
@@ -204,13 +204,13 @@ def index():
         year = request.form.get('year')
         # 验证数据
         if not title or not year or len(year) > 4 or len(title) > 60:
-            flash('Invalid input.')  # 显示错误提示
+            flash('输入错误！')  # 显示错误提示
             return redirect(url_for('index'))  # 重定向回主页
         # 保存表单数据到数据库
         movie = Movie(title=title, year=year)  # 创建记录
         db.session.add(movie)  # 添加到数据库会话
         db.session.commit()  # 提交数据库会话
-        flash('Item created.')  # 显示成功创建的提示
+        flash('电影条目成功创建~')  # 显示成功创建的提示
         return redirect(url_for('index'))  # 重定向回主页
 
     # user = User.query.first()  # 读取用户记录 # 有inject_user()了，就可以不用了
@@ -227,7 +227,7 @@ def login():
         password = request.form['password']
 
         if not username or not password:  # 检查用户名和密码是否为空
-            flash('Invalid input.')
+            flash('输入错误！')
             return redirect(url_for('login'))
 
         user = User.query.first()
@@ -235,10 +235,10 @@ def login():
         # 验证用户名和密码是否一致
         if username == user.username and user.validate_password(password):
             login_user(user)  # 登入用户
-            flash('Login success.')
+            flash('成功登录~')
             return redirect(url_for('index'))  # 重定向到主页
 
-        flash('Invalid username or password.')  # 如果验证失败，显示错误消息
+        flash('用户名或密码输入错误！')  # 如果验证失败，显示错误消息
         return redirect(url_for('login'))  # 重定向回登录页面
 
     return render_template('login.html')  # # 渲染并返回登录页面的 HTML 模板
@@ -249,7 +249,7 @@ def login():
 @login_required  # 用于视图保护，后面会详细介绍
 def logout():
     logout_user()  # 登出用户
-    flash('Goodbye.')
+    flash('再见~')
     return redirect(url_for('index'))  # 重定向回首页
 
 
@@ -261,7 +261,7 @@ def settings():
         name = request.form['name']  # 从表单中获取输入的新名称
 
         if not name or len(name) > 20:
-            flash('Invalid input.')
+            flash('输入错误！')
             return redirect(url_for('settings'))
 
         # current_user.name = name  # 将当前登录用户的名称更新为新输入的名称
@@ -270,7 +270,7 @@ def settings():
         user = User.query.first()
         user.name = name
         db.session.commit()  # 提交数据库会话，保存更改
-        flash('Settings updated.')   # 通过 Flash 提示用户设置已更新
+        flash('用户名成功更新~')   # 通过 Flash 提示用户设置已更新
         return redirect(url_for('index'))  # 重定向到主页
 
     return render_template('settings.html')  # 渲染并返回设置页面的 HTML 模板

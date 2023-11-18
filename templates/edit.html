@@ -2,11 +2,11 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h3>Edit item</h3>
+<h3>编辑电影信息</h3>
 <form method="post">
     {# value 属性可将对应的数据提前写到输入框里 #}
-    Name <input type="text" name="title" autocomplete="off" required value="{{ movie.title }}">
-    Year <input type="text" name="year" autocomplete="off" required value="{{ movie.year }}">
-    <input class="btn" type="submit" name="submit" value="Update">
+    电影名称 <input type="text" name="title" autocomplete="off" required value="{{ movie.title }}">
+    上映时间 <input type="text" name="year" autocomplete="off" required value="{{ movie.year }}">
+    <input class="btn" type="submit" name="submit" value="更新信息">
 </form>
 {% endblock %}
