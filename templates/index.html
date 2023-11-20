@@ -16,7 +16,7 @@
 
 <ul class="movie-list">
     {% for movie in movies %}
-    <li>{{ movie.title }} - {{ movie.year }}
+    <li>{{ movie.title }} - {{ movie.year }} - {{ movie.country }} - {{ movie.type }} - {{ movie.box }}亿
         <span class="float-right">
             {% if current_user.is_authenticated %}
             {# 编辑电影条目的链接 #}

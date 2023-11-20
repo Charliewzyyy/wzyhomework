@@ -5,8 +5,22 @@
 <h3>编辑电影信息</h3>
 <form method="post">
     {# value 属性可将对应的数据提前写到输入框里 #}
-    电影名称 <input type="text" name="title" autocomplete="off" required value="{{ movie.title }}">
-    上映时间 <input type="text" name="year" autocomplete="off" required value="{{ movie.year }}">
+    <br>
+    电影名称 <input type="text" name="title" autocomplete="on" required value="{{ movie.title }}">
+    <br><br>
+    上映年份 <input type="text" name="year" autocomplete="on" required value="{{ movie.year }}">
+    <br><br>
+    上映月份 <input type="text" name="month" autocomplete="on" required value="{{ movie.month }}">
+    <br><br>
+    上映日期 <input type="text" name="day" autocomplete="on" required value="{{ movie.day }}">
+    <br><br>
+    出品国家 <input type="text" name="country" autocomplete="on" required value="{{ movie.country }}">
+    <br><br>
+    电影类型 <input type="text" name="type" autocomplete="on" required value="{{ movie.type }}">
+    <br><br>
+    电影票房 <input type="text" name="box" autocomplete="on" required value="{{ movie.box }}">
+    <br><br>
     <input class="btn" type="submit" name="submit" value="更新信息">
+    <br>
 </form>
 {% endblock %}

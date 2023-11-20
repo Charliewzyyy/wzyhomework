@@ -96,8 +96,16 @@ input[type=text] {
     border: 1px solid #ddd;
 }
 
-input[name=year] {
+input[name=year],
+input[name=month],
+input[name=day] {
     width: 50px;
+}
+
+input[name=country],
+input[name=type],
+input[name=box] {
+    width: 100px;
 }
 
 .btn {

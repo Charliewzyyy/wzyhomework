@@ -81,20 +81,185 @@ class User(db.Model, UserMixin):  # 表名将会是 user（自动生成，小写
         return check_password_hash(self.password_hash, password)  # 返回布尔值
 
 
+### 模板上下文处理函数
+@app.context_processor
+def inject_user():  # 函数名可以随意修改
+    user = User.query.first()
+    return dict(user=user)  # 需要返回字典，等同于return {'user': user}
+    # 这个函数返回的变量（以字典键值对的形式）将会统一注入到每一个模板的上下文环境中，因此可以直接在模板中使用。
+    # 后面我们创建的任意一个模板，都可以在模板中直接使用 user 变量。
+
+
+### 400 错误处理函数
+@app.errorhandler(400)
+def bad_request(e):
+    return render_template('400.html'), 400
+
+
+### 404 错误处理函数
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+
+### 500 错误处理函数
+@app.errorhandler(500)
+def internal_server_error(e):
+    return render_template('500.html'), 500
+
+
+### 编辑电影条目
+@app.route('/movie/edit/<int:movie_id>', methods=['GET', 'POST'])
+@login_required
+# movie_id是电影条目记录在数据库中的主键值，用来在视图函数里查询对应的电影记录。
+def edit(movie_id):
+    # 返回对应主键的记录，如果没有找到，则返回 404 错误响应
+    movie = Movie.query.get_or_404(movie_id)
+
+    if request.method == 'POST':  # 处理编辑表单的提交请求
+        title = request.form['title']
+        year = request.form['year']
+        month = request.form['month']
+        day = request.form['day']
+        country = request.form['country']
+        type = request.form['type']
+        box = request.form['box']
+
+        if not title or not year or not month or not day or not country or not type or not box \
+                or int(year) > 2024 or int(year) < 1900 or int(month) > 12 or int(month) < 0 or int(day) > 31 or int(day) < 0 \
+                or len(title) > 20 or len(country) > 10 or len(type) > 10 or float(box) < 0:
+            flash('输入错误！')
+            return redirect(url_for('edit', movie_id=movie_id))
+            # 重定向回对应的编辑页面
+
+        # 更新
+        movie.title = title
+        movie.year = int(year)
+        movie.month = int(month)
+        movie.day = int(day)
+        movie.country = country
+        movie.type = type
+        movie.box = float(box)
+
+        db.session.commit()  # 提交数据库会话
+        flash('电影条目成功更新~')
+        return redirect(url_for('index'))  # 重定向回主页
+
+    return render_template('edit.html', movie=movie)  # 传入被编辑的电影记录
+
+
+### 删除电影条目
+@app.route('/movie/delete/<int:movie_id>', methods=['POST'])  # 限定只接受 POST 请求
+@login_required  # 登录保护
+def delete(movie_id):
+    movie = Movie.query.get_or_404(movie_id)  # 获取电影记录
+    db.session.delete(movie)  # 删除对应的记录
+    db.session.commit()  # 提交数据库会话
+    flash('电影条目成功删除~')
+    return redirect(url_for('index'))  # 重定向回主页
+
+
+### 程序主页
+### 在主页视图读取数据库记录
+@app.route('/', methods=['GET', 'POST'])  # 同时接受GET和POST请求
+def index():
+    ### 创建电影条目
+    if request.method == 'POST':  # 判断是否是 POST 请求
+        if not current_user.is_authenticated:  # 仅需要禁止未登录用户创建新条目
+            return redirect(url_for('index'))  # 重定向到主页
+
+        # 获取表单数据
+        title = request.form.get('title')  # 传入表单对应输入字段的name值
+        year = request.form.get('year')
+        # 验证数据
+        if not title or not year or len(year) > 4 or len(title) > 60:
+            flash('输入错误！')  # 显示错误提示
+            return redirect(url_for('index'))  # 重定向回主页
+        # 保存表单数据到数据库
+        movie = Movie(title=title, year=year)  # 创建记录
+        db.session.add(movie)  # 添加到数据库会话
+        db.session.commit()  # 提交数据库会话
+        flash('电影条目成功创建~')  # 显示成功创建的提示
+        return redirect(url_for('index'))  # 重定向回主页
+
+    # user = User.query.first()  # 读取用户记录 # 有inject_user()了，就可以不用了
+    movies = Movie.query.all()  # 读取所有电影记录
+    # return render_template('index.html', user=user, movies=movies)
+    return render_template('index.html', movies=movies)
+
+
+### 用户登录
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']  # request.form 是一个类似字典的对象
+        password = request.form['password']
+
+        if not username or not password:  # 检查用户名和密码是否为空
+            flash('输入错误！')
+            return redirect(url_for('login'))
+
+        user = User.query.first()
+
+        # 验证用户名和密码是否一致
+        if username == user.username and user.validate_password(password):
+            login_user(user)  # 登入用户
+            flash('成功登录~')
+            return redirect(url_for('index'))  # 重定向到主页
+
+        flash('用户名或密码输入错误！')  # 如果验证失败，显示错误消息
+        return redirect(url_for('login'))  # 重定向回登录页面
+
+    return render_template('login.html')  # # 渲染并返回登录页面的 HTML 模板
+
+
+### 登出
+@app.route('/logout')
+@login_required  # 用于视图保护，后面会详细介绍
+def logout():
+    logout_user()  # 登出用户
+    flash('再见~')
+    return redirect(url_for('index'))  # 重定向回首页
+
+
+### 支持设置用户名字
+@app.route('/settings', methods=['GET', 'POST'])
+@login_required
+def settings():
+    if request.method == 'POST':
+        name = request.form['name']  # 从表单中获取输入的新名称
+
+        if not name or len(name) > 20:
+            flash('输入错误！')
+            return redirect(url_for('settings'))
+
+        # current_user.name = name  # 将当前登录用户的名称更新为新输入的名称
+        # current_user 会返回当前登录用户的数据库记录对象
+        # 等同于下面的用法
+        user = User.query.first()
+        user.name = name
+        db.session.commit()  # 提交数据库会话，保存更改
+        flash('用户名成功更新~')  # 通过 Flash 提示用户设置已更新
+        return redirect(url_for('index'))  # 重定向到主页
+
+    return render_template('settings.html')  # 渲染并返回设置页面的 HTML 模板
+
+
 class Movie(db.Model):  # 表名将会是 movie
     # id = db.Column(db.Integer, primary_key=True)  # 主键
     # title = db.Column(db.String(60))  # 电影标题
     # year = db.Column(db.String(4))  # 电影年份
-    id = db.Column(db.Integer, primary_key=True)   # 主键
-    title = db.Column(db.String(60))  # 电影标题
-    release_date = db.Column(db.DateTime)  # 电影出品日期
-    country = db.Column(db.String(20))  # 电影出品国家
+    id = db.Column(db.Integer, primary_key=True)  # 主键
+    title = db.Column(db.String(20))  # 电影名称
+    year = db.Column(db.Integer)  # 电影上映年份
+    month = db.Column(db.Integer)  # 电影上映月份
+    day = db.Column(db.Integer)  # 电影上映日期
+    country = db.Column(db.String(10))  # 电影出品国家
     type = db.Column(db.String(10))  # 电影类型
-    year = db.Column(db.String(4))  # 电影出品年份
     box = db.Column(db.Float)  # 电影票房
 
     # 添加关联关系
-    actors = db.relationship('Actor', secondary='movie_actor_relation', back_populates='movies')
+    actors = db.relationship('Actor', secondary='movie_actor_relation', back_populates='movies', cascade='all, delete-orphan', single_parent=True, passive_deletes=True)
 
 
 class Actor(db.Model):
@@ -104,15 +269,24 @@ class Actor(db.Model):
     country = db.Column(db.String(20))
 
     # 添加关联关系
-    movies = db.relationship('Movie', secondary='movie_actor_relation', back_populates='actors')
+    movies = db.relationship('Movie', secondary='movie_actor_relation', back_populates='actors', cascade='all, delete-orphan', single_parent=True, passive_deletes=True)
 
+
+# class MovieActorRelation(db.Model):
+#     id = db.Column(db.Integer, primary_key=True)
+#     movie_id = db.Column(db.Integer, db.ForeignKey('movie.id'))
+#     actor_id = db.Column(db.Integer, db.ForeignKey('actor.id'))
+#     relation_type = db.Column(db.String(20))
 
 class MovieActorRelation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    movie_id = db.Column(db.Integer, db.ForeignKey('movie.id'))
-    actor_id = db.Column(db.Integer, db.ForeignKey('actor.id'))
+    movie_id = db.Column(db.Integer, db.ForeignKey('movie.id', ondelete='SET NULL', onupdate='SET NULL'))
+    actor_id = db.Column(db.Integer, db.ForeignKey('actor.id', ondelete='SET NULL', onupdate='SET NULL'))
     relation_type = db.Column(db.String(20))
 
+    # 添加关联关系
+    movie = db.relationship('Movie', backref=db.backref('movie_actor_relations', cascade='all, delete-orphan', passive_deletes=True))
+    actor = db.relationship('Actor', backref=db.backref('movie_actor_relations', cascade='all, delete-orphan', passive_deletes=True))
 
 ### 自定义命令 initdb
 @app.cli.command()  # 注册为命令
@@ -164,10 +338,11 @@ def forge():
         movie = Movie(
             id=int(data[0]),
             title=data[1],
-            release_date=datetime.strptime(data[2], '%Y/%m/%d').date(),
+            year=data[5],
+            month=datetime.strptime(data[2], '%Y/%m/%d').month,
+            day=datetime.strptime(data[2], '%Y/%m/%d').day,
             country=data[3],
             type=data[4],
-            year=data[5],
             box=data[6]
         )
         db.session.add(movie)
@@ -292,169 +467,5 @@ def forge():
         )
         db.session.add(relation)
 
-    # movies = [
-    #     {'title': 'My Neighbor Totoro', 'year': '1988'},
-    #     {'title': 'Dead Poets Society', 'year': '1989'},
-    #     {'title': 'A Perfect World', 'year': '1993'},
-    #     {'title': 'Leon', 'year': '1994'},
-    #     {'title': 'Mahjong', 'year': '1996'},
-    #     {'title': 'Swallowtail Butterfly', 'year': '1996'},
-    #     {'title': 'King of Comedy', 'year': '1999'},
-    #     {'title': 'Devils on the Doorstep', 'year': '1999'},
-    #     {'title': 'WALL-E', 'year': '2008'},
-    #     {'title': 'The Pork of Music', 'year': '2012'},
-    # ]
-    #
-    # for m in movies:
-    #     movie = Movie(title=m['title'], year=m['year'])
-    #     db.session.add(movie)
-
     db.session.commit()
     click.echo('Done.')
-
-
-### 模板上下文处理函数
-@app.context_processor
-def inject_user():  # 函数名可以随意修改
-    user = User.query.first()
-    return dict(user=user)  # 需要返回字典，等同于return {'user': user}
-    # 这个函数返回的变量（以字典键值对的形式）将会统一注入到每一个模板的上下文环境中，因此可以直接在模板中使用。
-    # 后面我们创建的任意一个模板，都可以在模板中直接使用 user 变量。
-
-### 400 错误处理函数
-@app.errorhandler(400)
-def bad_request(e):
-    return render_template('400.html'), 400
-
-### 404 错误处理函数
-@app.errorhandler(404)
-def page_not_found(e):
-    return render_template('404.html'), 404
-
-### 500 错误处理函数
-@app.errorhandler(500)
-def internal_server_error(e):
-    return render_template('500.html'), 500
-
-
-### 编辑电影条目
-@app.route('/movie/edit/<int:movie_id>', methods=['GET', 'POST'])
-@login_required
-# movie_id是电影条目记录在数据库中的主键值，用来在视图函数里查询对应的电影记录。
-def edit(movie_id):
-    # 返回对应主键的记录，如果没有找到，则返回 404 错误响应
-    movie = Movie.query.get_or_404(movie_id)
-
-    if request.method == 'POST':  # 处理编辑表单的提交请求
-        title = request.form['title']
-        year = request.form['year']
-
-        if not title or not year or len(year) > 4 or len(title) > 60:
-            flash('输入错误！')
-            return redirect(url_for('edit', movie_id=movie_id))
-            # 重定向回对应的编辑页面
-
-        movie.title = title  # 更新标题
-        movie.year = year  # 更新年份
-        db.session.commit()  # 提交数据库会话
-        flash('电影条目成功更新~')
-        return redirect(url_for('index'))  # 重定向回主页
-
-    return render_template('edit.html', movie=movie)  # 传入被编辑的电影记录
-
-
-### 删除电影条目
-@app.route('/movie/delete/<int:movie_id>', methods=['POST'])  # 限定只接受 POST 请求
-@login_required  # 登录保护
-def delete(movie_id):
-    movie = Movie.query.get_or_404(movie_id)  # 获取电影记录
-    db.session.delete(movie)  # 删除对应的记录
-    db.session.commit()  # 提交数据库会话
-    flash('电影条目成功删除~')
-    return redirect(url_for('index'))  # 重定向回主页
-
-
-### 程序主页
-### 在主页视图读取数据库记录
-@app.route('/', methods=['GET', 'POST'])  # 同时接受GET和POST请求
-def index():
-    ### 创建电影条目
-    if request.method == 'POST':  # 判断是否是 POST 请求
-        if not current_user.is_authenticated:  # 仅需要禁止未登录用户创建新条目
-            return redirect(url_for('index'))  # 重定向到主页
-
-        # 获取表单数据
-        title = request.form.get('title')  # 传入表单对应输入字段的name值
-        year = request.form.get('year')
-        # 验证数据
-        if not title or not year or len(year) > 4 or len(title) > 60:
-            flash('输入错误！')  # 显示错误提示
-            return redirect(url_for('index'))  # 重定向回主页
-        # 保存表单数据到数据库
-        movie = Movie(title=title, year=year)  # 创建记录
-        db.session.add(movie)  # 添加到数据库会话
-        db.session.commit()  # 提交数据库会话
-        flash('电影条目成功创建~')  # 显示成功创建的提示
-        return redirect(url_for('index'))  # 重定向回主页
-
-    # user = User.query.first()  # 读取用户记录 # 有inject_user()了，就可以不用了
-    movies = Movie.query.all()  # 读取所有电影记录
-    # return render_template('index.html', user=user, movies=movies)
-    return render_template('index.html', movies=movies)
-
-
-### 用户登录
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form['username']  # request.form 是一个类似字典的对象
-        password = request.form['password']
-
-        if not username or not password:  # 检查用户名和密码是否为空
-            flash('输入错误！')
-            return redirect(url_for('login'))
-
-        user = User.query.first()
-
-        # 验证用户名和密码是否一致
-        if username == user.username and user.validate_password(password):
-            login_user(user)  # 登入用户
-            flash('成功登录~')
-            return redirect(url_for('index'))  # 重定向到主页
-
-        flash('用户名或密码输入错误！')  # 如果验证失败，显示错误消息
-        return redirect(url_for('login'))  # 重定向回登录页面
-
-    return render_template('login.html')  # # 渲染并返回登录页面的 HTML 模板
-
-
-### 登出
-@app.route('/logout')
-@login_required  # 用于视图保护，后面会详细介绍
-def logout():
-    logout_user()  # 登出用户
-    flash('再见~')
-    return redirect(url_for('index'))  # 重定向回首页
-
-
-### 支持设置用户名字
-@app.route('/settings', methods=['GET', 'POST'])
-@login_required
-def settings():
-    if request.method == 'POST':
-        name = request.form['name']  # 从表单中获取输入的新名称
-
-        if not name or len(name) > 20:
-            flash('输入错误！')
-            return redirect(url_for('settings'))
-
-        # current_user.name = name  # 将当前登录用户的名称更新为新输入的名称
-        # current_user 会返回当前登录用户的数据库记录对象
-        # 等同于下面的用法
-        user = User.query.first()
-        user.name = name
-        db.session.commit()  # 提交数据库会话，保存更改
-        flash('用户名成功更新~')   # 通过 Flash 提示用户设置已更新
-        return redirect(url_for('index'))  # 重定向到主页
-
-    return render_template('settings.html')  # 渲染并返回设置页面的 HTML 模板
