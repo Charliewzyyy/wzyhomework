@@ -10,6 +10,7 @@ from flask_login import UserMixin
 from flask_login import login_user
 from flask_login import login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
 
 ### 数据库配置
 WIN = sys.platform.startswith('win')
@@ -81,9 +82,36 @@ class User(db.Model, UserMixin):  # 表名将会是 user（自动生成，小写
 
 
 class Movie(db.Model):  # 表名将会是 movie
-    id = db.Column(db.Integer, primary_key=True)  # 主键
+    # id = db.Column(db.Integer, primary_key=True)  # 主键
+    # title = db.Column(db.String(60))  # 电影标题
+    # year = db.Column(db.String(4))  # 电影年份
+    id = db.Column(db.Integer, primary_key=True)   # 主键
     title = db.Column(db.String(60))  # 电影标题
-    year = db.Column(db.String(4))  # 电影年份
+    release_date = db.Column(db.DateTime)  # 电影出品日期
+    country = db.Column(db.String(20))  # 电影出品国家
+    type = db.Column(db.String(10))  # 电影类型
+    year = db.Column(db.String(4))  # 电影出品年份
+    box = db.Column(db.Float)  # 电影票房
+
+    # 添加关联关系
+    actors = db.relationship('Actor', secondary='movie_actor_relation', back_populates='movies')
+
+
+class Actor(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(20))
+    gender = db.Column(db.String(2))
+    country = db.Column(db.String(20))
+
+    # 添加关联关系
+    movies = db.relationship('Movie', secondary='movie_actor_relation', back_populates='actors')
+
+
+class MovieActorRelation(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    movie_id = db.Column(db.Integer, db.ForeignKey('movie.id'))
+    actor_id = db.Column(db.Integer, db.ForeignKey('actor.id'))
+    relation_type = db.Column(db.String(20))
 
 
 ### 自定义命令 initdb
@@ -104,26 +132,182 @@ def forge():
     """Generate fake data."""
     db.create_all()
 
-    # 全局的两个变量移动到这个函数内
+    # 添加用户信息
     name = 'Charliewzyyy'
-    movies = [
-        {'title': 'My Neighbor Totoro', 'year': '1988'},
-        {'title': 'Dead Poets Society', 'year': '1989'},
-        {'title': 'A Perfect World', 'year': '1993'},
-        {'title': 'Leon', 'year': '1994'},
-        {'title': 'Mahjong', 'year': '1996'},
-        {'title': 'Swallowtail Butterfly', 'year': '1996'},
-        {'title': 'King of Comedy', 'year': '1999'},
-        {'title': 'Devils on the Doorstep', 'year': '1999'},
-        {'title': 'WALL-E', 'year': '2008'},
-        {'title': 'The Pork of Music', 'year': '2012'},
-    ]
 
     user = User(name=name)
     db.session.add(user)
-    for m in movies:
-        movie = Movie(title=m['title'], year=m['year'])
+
+    # 添加电影信息
+    movies = [
+        ('1001', '战狼2', '2017/7/27', '中国', '战争', '2017', 56.84),
+        ('1002', '哪吒之魔童降世', '2019/7/26', '中国', '动画', '2019', 50.15),
+        ('1003', '流浪地球', '2019/2/5', '中国', '科幻', '2019', 46.86),
+        ('1004', '复仇者联盟4', '2019/4/24', '美国', '科幻', '2019', 42.5),
+        ('1005', '红海行动', '2018/2/16', '中国', '战争', '2018', 36.5),
+        ('1006', '唐人街探案2', '2018/2/16', '中国', '喜剧', '2018', 33.97),
+        ('1007', '我不是药神', '2018/7/5', '中国', '喜剧', '2018', 31),
+        ('1008', '中国机长', '2019/9/30', '中国', '剧情', '2019', 29.12),
+        ('1009', '速度与激情8', '2017/4/14', '美国', '动作', '2017', 26.7),
+        ('1010', '西虹市首富', '2018/7/27', '中国', '喜剧', '2018', 25.47),
+        ('1011', '复仇者联盟3', '2018/5/11', '美国', '科幻', '2018', 23.9),
+        ('1012', '捉妖记2', '2018/2/16', '中国', '喜剧', '2018', 22.37),
+        ('1013', '八佰', '2020/08/21', '中国', '战争', '2020', 30.1),
+        ('1014', '姜子牙', '2020/10/01', '中国', '动画', '2020', 16.02),
+        ('1015', '我和我的家乡', '2020/10/01', '中国', '剧情', '2020', 28.29),
+        ('1016', '你好，李焕英', '2021/02/12', '中国', '喜剧', '2021', 54.13),
+        ('1017', '长津湖', '2021/09/30', '中国', '战争', '2021', 53.48),
+        ('1018', '速度与激情9', '2021/05/21', '中国', '动作', '2021', 13.92),
+    ]
+
+    for data in movies:
+        movie = Movie(
+            id=int(data[0]),
+            title=data[1],
+            release_date=datetime.strptime(data[2], '%Y/%m/%d').date(),
+            country=data[3],
+            type=data[4],
+            year=data[5],
+            box=data[6]
+        )
         db.session.add(movie)
+
+    # 添加演员信息
+    actors_data = [
+        ('2001', '吴京', '男', '中国'),
+        ('2002', '饺子', '男', '中国'),
+        ('2003', '屈楚萧', '男', '中国'),
+        ('2004', '郭帆', '男', '中国'),
+        ('2005', '乔罗素', '男', '美国'),
+        ('2006', '小罗伯特·唐尼', '男', '美国'),
+        ('2007', '克里斯·埃文斯', '男', '美国'),
+        ('2008', '林超贤', '男', '中国'),
+        ('2009', '张译', '男', '中国'),
+        ('2010', '黄景瑜', '男', '中国'),
+        ('2011', '陈思诚', '男', '中国'),
+        ('2012', '王宝强', '男', '中国'),
+        ('2013', '刘昊然', '男', '中国'),
+        ('2014', '文牧野', '男', '中国'),
+        ('2015', '徐峥', '男', '中国'),
+        ('2016', '刘伟强', '男', '中国'),
+        ('2017', '张涵予', '男', '中国'),
+        ('2018', 'F·加里·格雷', '男', '美国'),
+        ('2019', '范·迪塞尔', '男', '美国'),
+        ('2020', '杰森·斯坦森', '男', '美国'),
+        ('2021', '闫非', '男', '中国'),
+        ('2022', '沈腾', '男', '中国'),
+        ('2023', '安东尼·罗素', '男', '美国'),
+        ('2024', '克里斯·海姆斯沃斯', '男', '美国'),
+        ('2025', '许诚毅', '男', '中国'),
+        ('2026', '梁朝伟', '男', '中国'),
+        ('2027', '白百何', '女', '中国'),
+        ('2028', '井柏然', '男', '中国'),
+        ('2029', '管虎', '男', '中国'),
+        ('2030', '王千源', '男', '中国'),
+        ('2031', '姜武', '男', '中国'),
+        ('2032', '宁浩', '男', '中国'),
+        ('2033', '葛优', '男', '中国'),
+        ('2034', '范伟', '男', '中国'),
+        ('2035', '贾玲', '女', '中国'),
+        ('2036', '张小斐', '女', '中国'),
+        ('2037', '陈凯歌', '男', '中国'),
+        ('2038', '徐克', '男', '中国'),
+        ('2039', '易烊千玺', '男', '中国'),
+        ('2040', '林诣彬', '男', '美国'),
+        ('2041', '米歇尔·罗德里格兹', '女', '美国'),
+    ]
+
+    for data in actors_data:
+        actor = Actor(
+            id=int(data[0]),
+            name=data[1],
+            gender=data[2],
+            country=data[3]
+        )
+        db.session.add(actor)
+
+    # 添加关系信息
+    relations_data = [
+        ('1', '1001', '2001', '主演'),
+        ('2', '1001', '2001', '导演'),
+        ('3', '1002', '2002', '导演'),
+        ('4', '1003', '2001', '主演'),
+        ('5', '1003', '2003', '主演'),
+        ('6', '1003', '2004', '导演'),
+        ('7', '1004', '2005', '导演'),
+        ('8', '1004', '2006', '主演'),
+        ('9', '1004', '2007', '主演'),
+        ('10', '1005', '2008', '导演'),
+        ('11', '1005', '2009', '主演'),
+        ('12', '1005', '2010', '主演'),
+        ('13', '1006', '2011', '导演'),
+        ('14', '1006', '2012', '主演'),
+        ('15', '1006', '2013', '主演'),
+        ('16', '1007', '2014', '导演'),
+        ('17', '1007', '2015', '主演'),
+        ('18', '1008', '2016', '导演'),
+        ('19', '1008', '2017', '主演'),
+        ('20', '1009', '2018', '导演'),
+        ('21', '1009', '2019', '主演'),
+        ('22', '1009', '2020', '主演'),
+        ('23', '1010', '2021', '导演'),
+        ('24', '1010', '2022', '主演'),
+        ('25', '1011', '2023', '导演'),
+        ('26', '1011', '2006', '主演'),
+        ('27', '1011', '2024', '主演'),
+        ('28', '1012', '2025', '导演'),
+        ('29', '1012', '2026', '主演'),
+        ('30', '1012', '2027', '主演'),
+        ('31', '1012', '2028', '主演'),
+        ('32', '1013', '2029', '导演'),
+        ('33', '1013', '2030', '主演'),
+        ('34', '1013', '2009', '主演'),
+        ('35', '1013', '2031', '主演'),
+        ('36', '1015', '2032', '导演'),
+        ('37', '1015', '2015', '导演'),
+        ('38', '1015', '2011', '导演'),
+        ('39', '1015', '2015', '主演'),
+        ('40', '1015', '2033', '主演'),
+        ('41', '1015', '2034', '主演'),
+        ('42', '1016', '2035', '导演'),
+        ('43', '1016', '2035', '主演'),
+        ('44', '1016', '2036', '主演'),
+        ('45', '1016', '2022', '主演'),
+        ('46', '1017', '2037', '导演'),
+        ('47', '1017', '2038', '导演'),
+        ('48', '1017', '2008', '导演'),
+        ('49', '1017', '2001', '主演'),
+        ('50', '1017', '2039', '主演'),
+        ('51', '1018', '2040', '导演'),
+        ('52', '1018', '2019', '主演'),
+        ('53', '1018', '2041', '主演'),
+    ]
+
+    for data in relations_data:
+        relation = MovieActorRelation(
+            id=int(data[0]),
+            movie_id=int(data[1]),
+            actor_id=int(data[2]),
+            relation_type=data[3]
+        )
+        db.session.add(relation)
+
+    # movies = [
+    #     {'title': 'My Neighbor Totoro', 'year': '1988'},
+    #     {'title': 'Dead Poets Society', 'year': '1989'},
+    #     {'title': 'A Perfect World', 'year': '1993'},
+    #     {'title': 'Leon', 'year': '1994'},
+    #     {'title': 'Mahjong', 'year': '1996'},
+    #     {'title': 'Swallowtail Butterfly', 'year': '1996'},
+    #     {'title': 'King of Comedy', 'year': '1999'},
+    #     {'title': 'Devils on the Doorstep', 'year': '1999'},
+    #     {'title': 'WALL-E', 'year': '2008'},
+    #     {'title': 'The Pork of Music', 'year': '2012'},
+    # ]
+    #
+    # for m in movies:
+    #     movie = Movie(title=m['title'], year=m['year'])
+    #     db.session.add(movie)
 
     db.session.commit()
     click.echo('Done.')
@@ -274,40 +458,3 @@ def settings():
         return redirect(url_for('index'))  # 重定向到主页
 
     return render_template('settings.html')  # 渲染并返回设置页面的 HTML 模板
-
-# ### 定义虚拟数据
-# name = 'Charliewzyyy'
-# movies = [
-#     {'title': 'My Neighbor Totoro', 'year': '1988'},
-#     {'title': 'Dead Poets Society', 'year': '1989'},
-#     {'title': 'A Perfect World', 'year': '1993'},
-#     {'title': 'Leon', 'year': '1994'},
-#     {'title': 'Mahjong', 'year': '1996'},
-#     {'title': 'Swallowtail Butterfly', 'year': '1996'},
-#     {'title': 'King of Comedy', 'year': '1999'},
-#     {'title': 'Devils on the Doorstep', 'year': '1999'},
-#     {'title': 'WALL-E', 'year': '2008'},
-#     {'title': 'The Pork of Music', 'year': '2012'},
-# ]
-
-# @app.route('/')
-# def hello():
-#     return '<h1>Hello Totoro!</h1><img src="http://helloflask.com/totoro.gif">'
-#
-#
-# @app.route("/user/<name>")
-# def user_page(name):
-#     return "User: %s" % name
-#
-#
-# @app.route('/test')
-# def test_url_for():
-#     # 下面是一些调用示例（请在命令行窗口查看输出的 URL）：
-#     print(url_for('hello'))  # 输出：/
-#     # 注意下面两个调用是如何生成包含 URL 变量的 URL 的
-#     print(url_for('user_page', name='greyli'))  # 输出：/user/greyli
-#     print(url_for('user_page', name='peter'))  # 输出：/user/peter
-#     print(url_for('test_url_for'))  # 输出：/test
-#     # 下面这个调用传入了多余的关键字参数，它们会被作为查询字符串附加到 URL后面。
-#     print(url_for('test_url_for', num=2))  # 输出：/test?num=2
-#     return 'Test page'
