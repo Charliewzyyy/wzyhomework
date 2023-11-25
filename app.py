@@ -1,6 +1,7 @@
 import os
 import sys
 import click
+import re
 
 from flask import Flask, render_template
 from flask import request, url_for, redirect, flash
@@ -135,7 +136,9 @@ def edit(movie_id):
 
         if not title or not year or not month or not day or not country or not type or not box \
                 or int(year) > 2024 or int(year) < 1900 or int(month) > 12 or int(month) < 0 or int(day) > 31 \
-                or int(day) < 0 or len(title) > 20 or len(country) > 10 or len(type) > 10 or float(box) < 0:
+                or int(day) < 0 or len(title) > 20 or len(country) > 10 or len(type) > 10 or float(box) < 0 \
+                or not_digits(year) or not_digits(month) or not_digits(day) or not_chinese(country) \
+                or not_chinese(type) or not_digits(box):
             flash('输入错误！')
             return redirect(url_for('edit', movie_id=movie_id))  # 重定向回对应的编辑页面
 
@@ -217,7 +220,7 @@ def index():
             flash('输入错误！')  # 显示错误提示
             return redirect(url_for('index'))  # 重定向回主页
         # 保存表单数据到数据库
-        movie = Movie(title=title, year=year)  # 创建记录
+        movie = Movie(title=title, year=year)  # 创建记录1
         db.session.add(movie)  # 添加到数据库会话
         db.session.commit()  # 提交数据库会话
         flash('电影条目成功创建~')  # 显示成功创建的提示
@@ -285,6 +288,55 @@ def settings():
     return render_template('settings.html')  # 渲染并返回设置页面的 HTML 模板
 
 
+### 录入人员
+@app.route('/add_actor', methods=['GET', 'POST'])
+@login_required
+def add_actor():
+    if request.method == 'POST':
+        # 获取表单数据
+        name = request.form.get('name')
+        gender = request.form.get('gender')
+        country = request.form.get('country')
+
+        # 检查输入是否合规
+        if not name or not gender or not country:
+            flash('请输入完整信息！')
+            return redirect(url_for('add_actor'))
+        if len(name) > 20 or len(country) > 10 or not_chinese(country) or not (gender == '男' or gender == '女'):
+            flash('输入错误！')
+            return redirect(url_for('add_actor'))
+
+        # 检查演员是否已存在
+        existing_actor = Actor.query.filter_by(name=name).first()
+        if existing_actor:
+            flash('已存在该演员！')
+            return redirect(url_for('add_actor'))
+
+        # 如果演员不存在，则创建新演员
+        new_actor = Actor(name=name, gender=gender, country=country)
+        db.session.add(new_actor)
+        db.session.commit()
+        flash('人员成功录入~')
+
+        # 可以选择重定向到演员列表页面或其他页面
+        return redirect(url_for('index'))
+
+    return render_template('add_actor.html')
+
+
+### 检查输入的字符串是否全都是汉字
+def not_chinese(input_str):
+    pattern = re.compile("^[\u4e00-\u9fa5]+$")  # 使用正则表达式匹配字符串是否全都是汉字
+    result = pattern.match(input_str)
+    return result is None  # 如果字符串全都是汉字，则返回 False
+
+
+### 检查输入的字符串是否全都是数字
+def not_digits(input_str):
+    result = input_str.isdigit()
+    return result is None  # 如果字符串全都是数字，返回 False
+
+
 class Movie(db.Model):  # 表名将会是 movie
     id = db.Column(db.Integer, primary_key=True)  # 主键
     title = db.Column(db.String(20))  # 电影名称
@@ -303,8 +355,8 @@ class Movie(db.Model):  # 表名将会是 movie
 class Actor(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(20))
-    gender = db.Column(db.String(2))
-    country = db.Column(db.String(20))
+    gender = db.Column(db.String(1))
+    country = db.Column(db.String(10))
 
     # 添加关联关系
     movies = db.relationship('Movie', secondary='movie_actor_relation', back_populates='actors',

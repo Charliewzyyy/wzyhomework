@@ -104,8 +104,13 @@ input[name=day] {
 
 input[name=country],
 input[name=type],
-input[name=box] {
+input[name=box],
+input[name=name] {
     width: 100px;
+}
+
+input[name=gender] {
+    width: 20px;
 }
 
 .btn {
