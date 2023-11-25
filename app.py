@@ -116,6 +116,12 @@ def edit(movie_id):
     # 返回对应主键的记录，如果没有找到，则返回 404 错误响应
     movie = Movie.query.get_or_404(movie_id)
 
+    # 获取与该电影相关的导演、主演信息
+    director_relation = MovieActorRelation.query.filter_by(movie_id=movie.id, relation_type='导演').first()
+    director_name = Actor.query.get(director_relation.actor_id).name if director_relation else '无'
+    star_relation = MovieActorRelation.query.filter_by(movie_id=movie.id, relation_type='主演').first()
+    star_name = Actor.query.get(star_relation.actor_id).name if star_relation else '无'
+
     if request.method == 'POST':  # 处理编辑表单的提交请求
         title = request.form['title']
         year = request.form['year']
@@ -124,13 +130,14 @@ def edit(movie_id):
         country = request.form['country']
         type = request.form['type']
         box = request.form['box']
+        director = request.form['director']
+        star = request.form['star']
 
         if not title or not year or not month or not day or not country or not type or not box \
-                or int(year) > 2024 or int(year) < 1900 or int(month) > 12 or int(month) < 0 or int(day) > 31 or int(day) < 0 \
-                or len(title) > 20 or len(country) > 10 or len(type) > 10 or float(box) < 0:
+                or int(year) > 2024 or int(year) < 1900 or int(month) > 12 or int(month) < 0 or int(day) > 31 \
+                or int(day) < 0 or len(title) > 20 or len(country) > 10 or len(type) > 10 or float(box) < 0:
             flash('输入错误！')
-            return redirect(url_for('edit', movie_id=movie_id))
-            # 重定向回对应的编辑页面
+            return redirect(url_for('edit', movie_id=movie_id))  # 重定向回对应的编辑页面
 
         # 更新
         movie.title = title
@@ -141,11 +148,45 @@ def edit(movie_id):
         movie.type = type
         movie.box = float(box)
 
+        # 更新导演关系
+        if director == "无":
+            db.session.delete(director_relation)
+        elif director != director_name:
+            # 检查输入的导演名是否存在
+            director_actor = Actor.query.filter_by(name=director).first()
+            if not director_actor:
+                flash('查无此导演！')
+                return redirect(url_for('edit', movie_id=movie_id))
+
+            # 更新导演关系
+            if director_relation:
+                director_relation.actor_id = director_actor.id
+            else:
+                director_relation = MovieActorRelation(movie_id=movie.id, actor_id=director_actor.id, relation_type='导演')
+                db.session.add(director_relation)
+
+        # 更新主演关系
+        if star == "无":
+            db.session.delete(star_relation)
+        elif star != star_name:
+            # 检查输入的导演名是否存在
+            star_actor = Actor.query.filter_by(name=star).first()
+            if not star_actor:
+                flash('查无此主演！')
+                return redirect(url_for('edit', movie_id=movie_id))
+
+            # 更新主演关系
+            if star_relation:
+                star_relation.actor_id = star_actor.id
+            else:
+                star_relation = MovieActorRelation(movie_id=movie.id, actor_id=star_actor.id, relation_type='主演')
+                db.session.add(star_relation)
+
         db.session.commit()  # 提交数据库会话
         flash('电影条目成功更新~')
         return redirect(url_for('index'))  # 重定向回主页
 
-    return render_template('edit.html', movie=movie)  # 传入被编辑的电影记录
+    return render_template('edit.html', movie=movie, director_name=director_name, star_name=star_name)
 
 
 ### 删除电影条目
@@ -184,7 +225,6 @@ def index():
 
     # user = User.query.first()  # 读取用户记录 # 有inject_user()了，就可以不用了
     movies = Movie.query.all()  # 读取所有电影记录
-    # return render_template('index.html', user=user, movies=movies)
     return render_template('index.html', movies=movies)
 
 
@@ -246,9 +286,6 @@ def settings():
 
 
 class Movie(db.Model):  # 表名将会是 movie
-    # id = db.Column(db.Integer, primary_key=True)  # 主键
-    # title = db.Column(db.String(60))  # 电影标题
-    # year = db.Column(db.String(4))  # 电影年份
     id = db.Column(db.Integer, primary_key=True)  # 主键
     title = db.Column(db.String(20))  # 电影名称
     year = db.Column(db.Integer)  # 电影上映年份
@@ -259,7 +296,8 @@ class Movie(db.Model):  # 表名将会是 movie
     box = db.Column(db.Float)  # 电影票房
 
     # 添加关联关系
-    actors = db.relationship('Actor', secondary='movie_actor_relation', back_populates='movies', cascade='all, delete-orphan', single_parent=True, passive_deletes=True)
+    actors = db.relationship('Actor', secondary='movie_actor_relation', back_populates='movies',
+                             cascade='all, delete-orphan', single_parent=True, passive_deletes=True)
 
 
 class Actor(db.Model):
@@ -269,14 +307,9 @@ class Actor(db.Model):
     country = db.Column(db.String(20))
 
     # 添加关联关系
-    movies = db.relationship('Movie', secondary='movie_actor_relation', back_populates='actors', cascade='all, delete-orphan', single_parent=True, passive_deletes=True)
+    movies = db.relationship('Movie', secondary='movie_actor_relation', back_populates='actors',
+                             cascade='all, delete-orphan', single_parent=True, passive_deletes=True)
 
-
-# class MovieActorRelation(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     movie_id = db.Column(db.Integer, db.ForeignKey('movie.id'))
-#     actor_id = db.Column(db.Integer, db.ForeignKey('actor.id'))
-#     relation_type = db.Column(db.String(20))
 
 class MovieActorRelation(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -285,8 +318,11 @@ class MovieActorRelation(db.Model):
     relation_type = db.Column(db.String(20))
 
     # 添加关联关系
-    movie = db.relationship('Movie', backref=db.backref('movie_actor_relations', cascade='all, delete-orphan', passive_deletes=True))
-    actor = db.relationship('Actor', backref=db.backref('movie_actor_relations', cascade='all, delete-orphan', passive_deletes=True))
+    movie = db.relationship('Movie', backref=db.backref('movie_actor_relations', cascade='all, delete-orphan',
+                                                        passive_deletes=True))
+    actor = db.relationship('Actor', backref=db.backref('movie_actor_relations', cascade='all, delete-orphan',
+                                                        passive_deletes=True))
+
 
 ### 自定义命令 initdb
 @app.cli.command()  # 注册为命令
