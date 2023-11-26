@@ -212,21 +212,6 @@ def index():
         if not current_user.is_authenticated:  # 仅需要禁止未登录用户创建新条目
             return redirect(url_for('index'))  # 重定向到主页
 
-        # 获取表单数据
-        title = request.form.get('title')  # 传入表单对应输入字段的name值
-        year = request.form.get('year')
-        # 验证数据
-        if not title or not year or len(year) > 4 or len(title) > 60:
-            flash('输入错误！')  # 显示错误提示
-            return redirect(url_for('index'))  # 重定向回主页
-        # 保存表单数据到数据库
-        movie = Movie(title=title, year=year)  # 创建记录1
-        db.session.add(movie)  # 添加到数据库会话
-        db.session.commit()  # 提交数据库会话
-        flash('电影条目成功创建~')  # 显示成功创建的提示
-        return redirect(url_for('index'))  # 重定向回主页
-
-    # user = User.query.first()  # 读取用户记录 # 有inject_user()了，就可以不用了
     movies = Movie.query.all()  # 读取所有电影记录
     return render_template('index.html', movies=movies)
 
@@ -276,9 +261,6 @@ def settings():
             flash('输入错误！')
             return redirect(url_for('settings'))
 
-        # current_user.name = name  # 将当前登录用户的名称更新为新输入的名称
-        # current_user 会返回当前登录用户的数据库记录对象
-        # 等同于下面的用法
         user = User.query.first()
         user.name = name
         db.session.commit()  # 提交数据库会话，保存更改
@@ -322,6 +304,63 @@ def add_actor():
         return redirect(url_for('index'))
 
     return render_template('add_actor.html')
+
+
+### 录入电影
+@app.route('/add_movie', methods=['GET', 'POST'])
+@login_required
+def add_movie():
+    if request.method == 'POST':
+        # 获取表单数据
+        title = request.form['title']
+        year = request.form['year']
+        month = request.form['month']
+        day = request.form['day']
+        country = request.form['country']
+        type = request.form['type']
+        box = request.form['box']
+        director = request.form['director']
+        star = request.form['star']
+
+        # 检查输入是否合规
+        if not title or not year or not month or not day or not country or not type or not box \
+                or int(year) > 2024 or int(year) < 1900 or int(month) > 12 or int(month) < 0 or int(day) > 31 \
+                or int(day) < 0 or len(title) > 20 or len(country) > 10 or len(type) > 10 or float(box) < 0 \
+                or not_digits(year) or not_digits(month) or not_digits(day) or not_chinese(country) \
+                or not_chinese(type) or not_digits(box):
+            flash('输入错误！')
+            return redirect(url_for('add_movie'))  # 重定向回对应的编辑页面
+
+        # 检查电影是否已存在
+        existing_movie = Movie.query.filter_by(title=title).first()
+        if existing_movie:
+            flash('已存在该电影！')
+            return redirect(url_for('add_movie'))
+
+        # 检查人员是否已存在
+        existing_director = Actor.query.filter_by(name=director).first()
+        existing_star = Actor.query.filter_by(name=star).first()
+        if not existing_director or not existing_star:
+            flash('不存在该人员！请先录入人员信息！')
+            return redirect(url_for('add_movie'))
+
+        # 如果电影不存在且人员已存在，则创建新电影和映射关系
+        new_movie = Movie(title=title, year=year, month=month, day=day, country=country, type=type, box=box)
+
+        db.session.add(new_movie)  # 为了获取id 必须先提交new_movie
+        db.session.commit()
+
+        new_Relation_director = MovieActorRelation(movie_id=new_movie.id, actor_id=existing_director.id, relation_type='导演')
+        new_Relation_star = MovieActorRelation(movie_id=new_movie.id, actor_id=existing_star.id, relation_type='主演')
+
+        db.session.add(new_Relation_director, new_Relation_star)
+        db.session.commit()
+        flash('电影成功录入~')
+
+        # 可以选择重定向到演员列表页面或其他页面
+        return redirect(url_for('index'))
+
+    return render_template('add_movie.html')
 
 
 ### 检查输入的字符串是否全都是汉字

@@ -3,16 +3,16 @@
 
 {% block content %}
 <p>总计有{{ movies|length }}部电影</p>
-{# 添加创建新条目表单 #}
-{% if current_user.is_authenticated %}
-<form method="post">
-    电影名称 <input type="text" name="title" autocomplete="off" required>
-    上映时间 <input type="text" name="year" autocomplete="off" required>
-    {# autocomplete=“off”：关闭自动完成（按下输入框不显示历史输入记录）#}
-    {# required:若用户没有输入内容就按下了提交按钮，浏览器会显示错误提示 #}
-    <input class="btn" type="submit" name="submit" value="添加">
-</form>
-{% endif %}
+<!--{# 添加创建新条目表单 #}-->
+<!--{% if current_user.is_authenticated %}-->
+<!--<form method="post">-->
+<!--    电影名称 <input type="text" name="title" autocomplete="off" required>-->
+<!--    上映时间 <input type="text" name="year" autocomplete="off" required>-->
+<!--    {# autocomplete=“off”：关闭自动完成（按下输入框不显示历史输入记录）#}-->
+<!--    {# required:若用户没有输入内容就按下了提交按钮，浏览器会显示错误提示 #}-->
+<!--    <input class="btn" type="submit" name="submit" value="添加">-->
+<!--</form>-->
+<!--{% endif %}-->
 
 <ul class="movie-list">
     {% for movie in movies %}

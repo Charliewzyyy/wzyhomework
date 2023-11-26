@@ -19,13 +19,13 @@
     电影类型 <input type="text" name="type" autocomplete="on" required value="{{ movie.type }}">
     <br><br>
     电影票房 <input type="text" name="box" autocomplete="on" required value="{{ movie.box }}">
-    {# 导演输入框 #}
+    {# 人员输入框 #}
     <br><br>
     导演 <input type="text" name="director" autocomplete="on" required value="{{ director_name }}">
     <br><br>
     主演 <input type="text" name="star" autocomplete="on" required value="{{ star_name }}">
     <br><br>
-    <input class="btn" type="submit" name="submit" value="更新信息">
+    <input class="btn" type="submit" name="submit" value="保存">
     <br>
 </form>
 {% endblock %}

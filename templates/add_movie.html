@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h3>录入电影信息</h3>
+  <form method="post">
+    <br>
+    电影名称 <input type="text" id="movieTitle" name="title" autocomplete="on" required>
+    <a class="imdb" href="#" id="searchLink" title="在豆瓣网中查询该电影" onclick="searchDouban()">豆瓣网</a>
+    <br><br>
+    上映年份 <input type="text" name="year" autocomplete="on" required>
+    <br><br>
+    上映月份 <input type="text" name="month" autocomplete="on" required>
+    <br><br>
+    上映日期 <input type="text" name="day" autocomplete="on" required>
+    <br><br>
+    出品国家 <input type="text" name="country" autocomplete="on" required>
+    <br><br>
+    电影类型 <input type="text" name="type" autocomplete="on" required>
+    <br><br>
+    电影票房 <input type="text" name="box" autocomplete="on" required>
+    <br><br>
+    导演 <input type="text" name="director" autocomplete="on" required>
+    <br><br>
+    主演 <input type="text" name="star" autocomplete="on" required>
+    <br><br>
+    <input class="btn" type="submit" name="submit" value="保存">
+    <br>
+  </form>
+
+  <script>
+    function searchDouban() {
+      var title = document.getElementById('movieTitle').value;
+      var doubanLink = 'https://movie.douban.com/subject_search?search_text=' + encodeURIComponent(title);
+      window.open(doubanLink, '_blank');
+    }
+  </script>
+{% endblock %}
