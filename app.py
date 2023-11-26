@@ -245,15 +245,15 @@ def edit_actor(actor_id):
     return render_template('edit_actor.html', actor=actor)
 
 
-### 删除影人
-@app.route('/actor/delete_actor/<int:actor_id>', methods=['POST'])  # 限定只接受 POST 请求
-@login_required  # 登录保护
-def delete_actor(actor_id):
-    actor = Actor.query.get_or_404(actor_id)
-    db.session.delete(actor)
-    db.session.commit()
-    flash('影人成功删除~')
-    return redirect(url_for('actor'))  # 重定向回主页
+# ### 删除影人
+# @app.route('/actor/delete_actor/<int:actor_id>', methods=['POST'])  # 限定只接受 POST 请求
+# @login_required  # 登录保护
+# def delete_actor(actor_id):
+#     actor = Actor.query.get_or_404(actor_id)
+#     db.session.delete(actor)
+#     db.session.commit()
+#     flash('影人成功删除~')
+#     return redirect(url_for('actor'))  # 重定向回主页
 
 
 ### 影人页
@@ -352,8 +352,7 @@ def add_actor():
         db.session.commit()
         flash('影人成功录入~')
 
-        # 可以选择重定向到演员列表页面或其他页面
-        return redirect(url_for('index'))
+        return redirect(url_for('add_actor'))
 
     return render_template('add_actor.html')
 
@@ -403,9 +402,11 @@ def add_movie():
         db.session.commit()
 
         new_Relation_director = MovieActorRelation(movie_id=new_movie.id, actor_id=existing_director.id, relation_type='导演')
-        new_Relation_star = MovieActorRelation(movie_id=new_movie.id, actor_id=existing_star.id, relation_type='主演')
+        db.session.add(new_Relation_director)
+        db.session.commit()
 
-        db.session.add(new_Relation_director, new_Relation_star)
+        new_Relation_star = MovieActorRelation(movie_id=new_movie.id, actor_id=existing_star.id, relation_type='主演')
+        db.session.add(new_Relation_star)
         db.session.commit()
         flash('电影成功录入~')
 
@@ -413,6 +414,49 @@ def add_movie():
         return redirect(url_for('index'))
 
     return render_template('add_movie.html')
+
+
+### 查询电影
+@app.route('/find_movie', methods=['GET', 'POST'])
+def find_movie():
+    if request.method == 'POST':
+        title = request.form.get('title')
+        movie = Movie.query.filter_by(title=title).first()
+
+        if movie is None:
+            flash('不存在该电影！')
+            return redirect(url_for('find_movie'))
+        else:
+            director_relation = MovieActorRelation.query.filter_by(movie_id=movie.id, relation_type='导演').first()
+            director_name = Actor.query.get(director_relation.actor_id).name if director_relation else '无'
+            star_relation = MovieActorRelation.query.filter_by(movie_id=movie.id, relation_type='主演').first()
+            star_name = Actor.query.get(star_relation.actor_id).name if star_relation else '无'
+            return render_template('find_movie.html', movie=movie, director_name=director_name, star_name=star_name)
+
+    return render_template('find_movie.html')
+
+
+### 查询影人
+@app.route('/find_actor', methods=['GET', 'POST'])
+def find_actor():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        actor = Actor.query.filter_by(name=name).first()
+
+        if actor is None:
+            flash('不存在该影人！')
+            return redirect(url_for('find_actor'))
+        else:
+            director_relations = MovieActorRelation.query.filter_by(actor_id=actor.id, relation_type='导演').all()
+            director_movie_names = [Movie.query.get(relation.movie_id).title for relation in director_relations] \
+                if director_relations else ['无']
+            star_relations = MovieActorRelation.query.filter_by(actor_id=actor.id, relation_type='主演').all()
+            star_movie_names = [Movie.query.get(relation.movie_id).title for relation in star_relations] \
+                if star_relations else ['无']
+            return render_template('find_actor.html', actor=actor,
+                                   director_movie_names=director_movie_names, star_movie_names=star_movie_names)
+
+    return render_template('find_actor.html')
 
 
 ### 检查输入的字符串是否全都是汉字

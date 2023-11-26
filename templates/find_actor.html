@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h3>查询影人</h3>
+
+  <form method="post">
+    影人姓名：<input type="text" name="name" required>
+    <input type="submit" value="查询">
+    <br>
+    {% if actor %}
+    <p>姓名：{{ actor.name }}</p>
+    <p>性别：{{ actor.gender }}</p>
+    <p>国籍：{{ actor.country }}</p>
+
+    {% if director_movie_names != ['无'] %}
+    {% for director_movie_name in director_movie_names %}
+    <p>在{{ director_movie_name }}中担任导演</p>
+    {% endfor %}
+    {% else %}
+    <p>没有担任过电影的导演</p>
+    {% endif %}
+
+    {% if star_movie_names != ['无'] %}
+    {% for star_movie_name in star_movie_names %}
+    <p>在{{ star_movie_name }}中担任主演</p>
+    {% endfor %}
+    {% else %}
+    <p>没有担任过电影的主演</p>
+    {% endif %}
+
+    <br>
+    {% endif %}
+  </form>
+{% endblock %}

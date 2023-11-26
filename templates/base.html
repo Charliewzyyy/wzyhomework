@@ -24,10 +24,12 @@
         <ul>
             <li><a href="{{ url_for('index') }}">电影</a></li>
             <li><a href="{{ url_for('actor') }}">影人</a></li>
+            <li><a href="{{ url_for('find_movie') }}">查询电影</a></li>
+            <li><a href="{{ url_for('find_actor') }}">查询影人</a></li>
             {# 如果用户已经登录，就显示设置和登出链接，否则显示登录链接 #}
             {% if current_user.is_authenticated %}
-            <li><a href="{{ url_for('add_actor') }}">录入影人</a></li>
             <li><a href="{{ url_for('add_movie') }}">录入电影</a></li>
+            <li><a href="{{ url_for('add_actor') }}">录入影人</a></li>
             <li><a href="{{ url_for('settings') }}">用户中心</a></li>
             <li><a href="{{ url_for('logout') }}">退出</a></li>
             {% else %}

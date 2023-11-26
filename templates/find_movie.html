@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h3>查询电影</h3>
+
+  <form method="post">
+    电影名称：<input type="text" name="title" required>
+    <input type="submit" value="查询">
+    <br>
+    {% if movie %}
+    <p>电影名称：{{ movie.title }}</p>
+    <p>上映年份：{{ movie.year }}</p>
+    <p>上映月份：{{ movie.month }}</p>
+    <p>上映日期：{{ movie.day }}</p>
+    <p>出品国家：{{ movie.country }}</p>
+    <p>电影类型：{{ movie.type }}</p>
+    <p>电影票房：{{ movie.box }}亿</p>
+    <p>导演：{{ director_name }}</p>
+    <p>主演：{{ star_name }}</p>
+    <br>
+    {% endif %}
+  </form>
+{% endblock %}
