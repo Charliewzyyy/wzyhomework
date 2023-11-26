@@ -1,10 +1,12 @@
 {% extends 'base.html' %}
 
 {% block content %}
-  <h3>录入人员信息</h3>
+  <h3>录入影人信息</h3>
   <form method="post">
     <br>
-    姓名 <input type="text" name="name" autocomplete="on" required>
+    {# 注意加上了id 为了之后的JavaScript #}
+    姓名 <input type="text" name="name" id='actorName' autocomplete="on" required>
+    <a class="imdb" href="#" id="searchLink" title="在豆瓣网中查询此人" onclick="searchDouban()">豆瓣网</a>
     <br><br>
     性别(男/女) <input type="text" name="gender" autocomplete="on" required>
     <br><br>
@@ -13,4 +15,11 @@
     <input class="btn" type="submit" name="submit" value="保存">
     <br>
   </form>
+  <script>
+    function searchDouban() {
+      var name = document.getElementById('actorName').value;
+      var doubanLink = 'https://movie.douban.com/celebrities/search?search_text=' + encodeURIComponent(name);
+      window.open(doubanLink, '_blank');
+    }
+</script>
 {% endblock %}

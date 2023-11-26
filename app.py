@@ -216,21 +216,50 @@ def index():
     return render_template('index.html', movies=movies)
 
 
-### 删除人员
+### 编辑影人信息
+@app.route('/actor/edit_actor/<int:actor_id>', methods=['GET', 'POST'])
+@login_required
+def edit_actor(actor_id):
+    # 返回对应主键的记录，如果没有找到，则返回 404 错误响应
+    actor = Actor.query.get_or_404(actor_id)
+
+    if request.method == 'POST':  # 处理编辑表单的提交请求
+        name = request.form['name']
+        gender = request.form['gender']
+        country = request.form['country']
+
+        if not name or not gender or not country or len(name) > 20 or not (gender == '男' or gender == '女') \
+                or len(country) > 10 or not_chinese(country):
+            flash('输入错误！')
+            return redirect(url_for('edit_actor', actor_id=actor_id))  # 重定向回对应的编辑页面
+
+        # 更新
+        actor.name = name
+        actor.gender = gender
+        actor.country = country
+
+        db.session.commit()  # 提交数据库会话
+        flash('影人信息成功更新~')
+        return redirect(url_for('actor'))  # 重定向回主页
+
+    return render_template('edit_actor.html', actor=actor)
+
+
+### 删除影人
 @app.route('/actor/delete_actor/<int:actor_id>', methods=['POST'])  # 限定只接受 POST 请求
 @login_required  # 登录保护
 def delete_actor(actor_id):
     actor = Actor.query.get_or_404(actor_id)
     db.session.delete(actor)
     db.session.commit()
-    flash('人员成功删除~')
+    flash('影人成功删除~')
     return redirect(url_for('actor'))  # 重定向回主页
 
 
-### 人员页
+### 影人页
 @app.route('/actor', methods=['GET', 'POST'])  # 同时接受GET和POST请求
 def actor():
-    ### 创建人员条目
+    ### 创建影人条目
     if request.method == 'POST':  # 判断是否是 POST 请求
         if not current_user.is_authenticated:  # 仅需要禁止未登录用户创建新条目
             return redirect(url_for('index'))  # 重定向到主页
@@ -293,7 +322,7 @@ def settings():
     return render_template('settings.html')  # 渲染并返回设置页面的 HTML 模板
 
 
-### 录入人员
+### 录入影人
 @app.route('/add_actor', methods=['GET', 'POST'])
 @login_required
 def add_actor():
@@ -321,7 +350,7 @@ def add_actor():
         new_actor = Actor(name=name, gender=gender, country=country)
         db.session.add(new_actor)
         db.session.commit()
-        flash('人员成功录入~')
+        flash('影人成功录入~')
 
         # 可以选择重定向到演员列表页面或其他页面
         return redirect(url_for('index'))
@@ -360,14 +389,14 @@ def add_movie():
             flash('已存在该电影！')
             return redirect(url_for('add_movie'))
 
-        # 检查人员是否已存在
+        # 检查影人是否已存在
         existing_director = Actor.query.filter_by(name=director).first()
         existing_star = Actor.query.filter_by(name=star).first()
         if not existing_director or not existing_star:
-            flash('不存在该人员！请先录入人员信息！')
+            flash('不存在该影人！请先录入影人信息！')
             return redirect(url_for('add_movie'))
 
-        # 如果电影不存在且人员已存在，则创建新电影和映射关系
+        # 如果电影不存在且影人已存在，则创建新电影和映射关系
         new_movie = Movie(title=title, year=year, month=month, day=day, country=country, type=type, box=box)
 
         db.session.add(new_movie)  # 为了获取id 必须先提交new_movie
