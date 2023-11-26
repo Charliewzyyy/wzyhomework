@@ -1,0 +1,22 @@
+{# 继承基模板的主页模板 #}
+{% extends 'base.html' %}
+
+{% block content %}
+<p>总计有{{ actors|length }}位导演或主演</p>
+<ul class="actor-list">
+    {% for actor in actors %}
+    <li>{{ actor.name }} - {{ actor.gender }} - {{ actor.country }}
+        <span class="float-right">
+            {% if current_user.is_authenticated %}
+            {# 编辑人员条目的链接 #}
+            {# 删除电影条目表单 #}
+            <form class="inline-form" method="post" action="{{ url_for('.delete_actor', actor_id=actor.id) }}">
+                <input class="btn" type="submit" name="delete_actor" value="删除" onclick="return confirm('您确定要删除吗？')">
+            </form>
+            {% endif %}
+            <a class="imdb" href="https://movie.douban.com/celebrities/search?search_text={{ actor.name }}" target="_blank" title="在 豆瓣网 中查询此人">豆瓣网</a>
+        </span>
+    </li>
+    {% endfor %}
+</ul>
+{% endblock %}

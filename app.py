@@ -216,6 +216,29 @@ def index():
     return render_template('index.html', movies=movies)
 
 
+### 删除人员
+@app.route('/actor/delete_actor/<int:actor_id>', methods=['POST'])  # 限定只接受 POST 请求
+@login_required  # 登录保护
+def delete_actor(actor_id):
+    actor = Actor.query.get_or_404(actor_id)
+    db.session.delete(actor)
+    db.session.commit()
+    flash('人员成功删除~')
+    return redirect(url_for('actor'))  # 重定向回主页
+
+
+### 人员页
+@app.route('/actor', methods=['GET', 'POST'])  # 同时接受GET和POST请求
+def actor():
+    ### 创建人员条目
+    if request.method == 'POST':  # 判断是否是 POST 请求
+        if not current_user.is_authenticated:  # 仅需要禁止未登录用户创建新条目
+            return redirect(url_for('index'))  # 重定向到主页
+
+    actors = Actor.query.all()  # 读取所有电影记录
+    return render_template('actor.html', actors=actors)
+
+
 ### 用户登录
 @app.route('/login', methods=['GET', 'POST'])
 def login():

@@ -23,6 +23,7 @@
     <nav>
         <ul>
             <li><a href="{{ url_for('index') }}">首页</a></li>
+            <li><a href="{{ url_for('actor') }}">人员信息</a></li>
             {# 如果用户已经登录，就显示设置和登出链接，否则显示登录链接 #}
             {% if current_user.is_authenticated %}
             <li><a href="{{ url_for('add_actor') }}">录入人员信息</a></li>
