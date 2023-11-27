@@ -165,7 +165,8 @@ def edit(movie_id):
             if director_relation:
                 director_relation.actor_id = director_actor.id
             else:
-                director_relation = MovieActorRelation(movie_id=movie.id, actor_id=director_actor.id, relation_type='导演')
+                director_relation = MovieActorRelation(movie_id=movie.id, actor_id=director_actor.id,
+                                                       relation_type='导演')
                 db.session.add(director_relation)
 
         # 更新主演关系
@@ -205,15 +206,26 @@ def delete(movie_id):
 
 ### 程序主页
 ### 在主页视图读取数据库记录
+# @app.route('/', methods=['GET', 'POST'])  # 同时接受GET和POST请求
+# def index():
+#     ### 创建电影条目
+#     if request.method == 'POST':  # 判断是否是 POST 请求
+#         if not current_user.is_authenticated:  # 仅需要禁止未登录用户创建新条目
+#             return redirect(url_for('index'))  # 重定向到主页
+#
+#     movies = Movie.query.all()  # 读取所有电影记录
+#     return render_template('index.html', movies=movies)
+from flask_paginate import Pagination
+
+
 @app.route('/', methods=['GET', 'POST'])  # 同时接受GET和POST请求
 def index():
-    ### 创建电影条目
-    if request.method == 'POST':  # 判断是否是 POST 请求
-        if not current_user.is_authenticated:  # 仅需要禁止未登录用户创建新条目
-            return redirect(url_for('index'))  # 重定向到主页
-
-    movies = Movie.query.all()  # 读取所有电影记录
-    return render_template('index.html', movies=movies)
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+    all_movies = Movie.query.all()  # 读取所有电影记录
+    movies = Movie.query.paginate(page=page, per_page=per_page, error_out=False)
+    pagination = Pagination(page=page, total=movies.total, per_page=per_page, css_framework='bootstrap4')
+    return render_template('index.html', movies=movies.items, pagination=pagination, all_movies=all_movies)
 
 
 ### 编辑影人信息
@@ -401,7 +413,8 @@ def add_movie():
         db.session.add(new_movie)  # 为了获取id 必须先提交new_movie
         db.session.commit()
 
-        new_Relation_director = MovieActorRelation(movie_id=new_movie.id, actor_id=existing_director.id, relation_type='导演')
+        new_Relation_director = MovieActorRelation(movie_id=new_movie.id, actor_id=existing_director.id,
+                                                   relation_type='导演')
         db.session.add(new_Relation_director)
         db.session.commit()
 

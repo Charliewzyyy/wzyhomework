@@ -2,17 +2,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<p>总计有{{ movies|length }}部电影</p>
-<!--{# 添加创建新条目表单 #}-->
-<!--{% if current_user.is_authenticated %}-->
-<!--<form method="post">-->
-<!--    电影名称 <input type="text" name="title" autocomplete="off" required>-->
-<!--    上映时间 <input type="text" name="year" autocomplete="off" required>-->
-<!--    {# autocomplete=“off”：关闭自动完成（按下输入框不显示历史输入记录）#}-->
-<!--    {# required:若用户没有输入内容就按下了提交按钮，浏览器会显示错误提示 #}-->
-<!--    <input class="btn" type="submit" name="submit" value="添加">-->
-<!--</form>-->
-<!--{% endif %}-->
+<p>总计有{{ all_movies|length }}部电影</p>
 
 <ul class="movie-list">
     {% for movie in movies %}
@@ -26,10 +16,32 @@
                 <input class="btn" type="submit" name="delete" value="删除" onclick="return confirm('您确定要删除吗？')">
             </form>
             {% endif %}
-            <a class="imdb" href="https://movie.douban.com/subject_search?search_text={{ movie.title }}" target="_blank" title="在 豆瓣网 中查询该电影">豆瓣网</a>
+            <a class="imdb" href="https://movie.douban.com/subject_search?search_text={{ movie.title }}" target="_blank" title="在 豆瓣网 中查询该电影">详情</a>
+            <a class="imdb" href="https://ys.endata.cn/DataMarket/Search?key={{ movie.title }}" target="_blank" title="在 艺恩娱数 中查询该电影票房分析">票房分析</a>
 <!--            <a class="imdb" href="https://www.imdb.com/find?q={{movie.title }}" target="_blank" title="Find this movie on IMDb">IMDb</a>-->
         </span>
     </li>
     {% endfor %}
 </ul>
 {% endblock %}
+
+{% block pagination %}
+<div class="pagination">
+    当前为：第{{ pagination.page }}页
+    <br>
+    <ul class="pagination">
+        跳转至：
+        {% for page_num in pagination.pages %}
+            {% if page_num %}
+                {% if page_num != pagination.page %}
+                    <li class="page-item"><a class="page-link" href="{{ url_for('index', page=page_num) }}">第{{ page_num }}页</a></li>
+                {% endif %}
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+</div>
+
+{% endblock %}
+
