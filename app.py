@@ -523,6 +523,16 @@ class MovieActorRelation(db.Model):
     actor = db.relationship('Actor', backref=db.backref('movie_actor_relations', cascade='all, delete-orphan',
                                                         passive_deletes=True))
 
+class Movie(db.Model):  # 表名将会是 movie
+    id = db.Column(db.Integer, primary_key=True)  # 主键
+    title = db.Column(db.String(20))  # 电影名称
+    year = db.Column(db.Integer)  # 电影上映年份
+    month = db.Column(db.Integer)  # 电影上映月份
+    day = db.Column(db.Integer)  # 电影上映日期
+    country = db.Column(db.String(10))  # 电影出品国家
+    type = db.Column(db.String(10))  # 电影类型
+    box = db.Column(db.Float)  # 电影票房
+
 
 ### 自定义命令 initdb
 @app.cli.command()  # 注册为命令
