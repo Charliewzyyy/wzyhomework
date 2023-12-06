@@ -6,4 +6,5 @@ __pycache__
 *.db
 htmlcov/
 .coverage
+env/
 
