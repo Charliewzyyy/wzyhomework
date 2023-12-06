@@ -30,6 +30,7 @@
             {% if current_user.is_authenticated %}
             <li><a href="{{ url_for('add_movie') }}">录入电影</a></li>
             <li><a href="{{ url_for('add_actor') }}">录入影人</a></li>
+            <li><a href="{{ url_for('box_analyse') }}">票房分析</a></li>
             <li><a href="{{ url_for('settings') }}">用户中心</a></li>
             <li><a href="{{ url_for('logout') }}">退出</a></li>
             {% else %}

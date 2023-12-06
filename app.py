@@ -2,6 +2,7 @@ import os
 import sys
 import click
 import re
+import csv
 
 from flask import Flask, render_template
 from flask import request, url_for, redirect, flash
@@ -12,6 +13,10 @@ from flask_login import login_user
 from flask_login import login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
 
 ### 数据库配置
 WIN = sys.platform.startswith('win')
@@ -472,6 +477,27 @@ def find_actor():
     return render_template('find_actor.html')
 
 
+### 票房分析
+@app.route('/box_analyse', methods=['GET', 'POST'])
+def box_analyse():
+    if request.method == 'POST':
+        title = request.form.get('title')
+        movie = MyMovie.query.filter_by(title=title).first()
+
+        if movie is None:
+            flash('不存在该电影！')
+            return redirect(url_for('box_analyse'))
+        else:
+            return render_template('box_analyse.html', movie=movie)
+
+    return render_template('box_analyse.html')
+
+
+### 票房预测
+
+
+
+
 ### 检查输入的字符串是否全都是汉字
 def not_chinese(input_str):
     pattern = re.compile("^[\u4e00-\u9fa5]+$")  # 使用正则表达式匹配字符串是否全都是汉字
@@ -523,15 +549,21 @@ class MovieActorRelation(db.Model):
     actor = db.relationship('Actor', backref=db.backref('movie_actor_relations', cascade='all, delete-orphan',
                                                         passive_deletes=True))
 
-class Movie(db.Model):  # 表名将会是 movie
+class MyMovie(db.Model):  # 表名将会是 movie
     id = db.Column(db.Integer, primary_key=True)  # 主键
     title = db.Column(db.String(20))  # 电影名称
+    type = db.Column(db.String(10))  # 电影类型
+    country = db.Column(db.String(10))  # 电影出品国家
     year = db.Column(db.Integer)  # 电影上映年份
     month = db.Column(db.Integer)  # 电影上映月份
     day = db.Column(db.Integer)  # 电影上映日期
-    country = db.Column(db.String(10))  # 电影出品国家
-    type = db.Column(db.String(10))  # 电影类型
-    box = db.Column(db.Float)  # 电影票房
+    length = db.Column(db.Float)  # 电影时长
+    rating = db.Column(db.Float)  # 电影评分
+    rating_number = db.Column(db.Integer)  # 电影打分人数
+    wishing_number = db.Column(db.Integer)  # 电影想看人数
+    box = db.Column(db.Integer)  # 电影票房
+    first_day_box = db.Column(db.Integer)  # 电影首日票房
+    first_week_box = db.Column(db.Integer)  # 电影首周票房
 
 
 ### 自定义命令 initdb
@@ -712,6 +744,27 @@ def forge():
             relation_type=data[3]
         )
         db.session.add(relation)
+
+    with open("C:\\Users\\ASUS\\wzyhomework\\pachong.csv", "r", encoding='gbk') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            mymovie = MyMovie(
+                title=row['电影名称'],
+                type=row['电影类型'],
+                country=row['出品国家'],
+                year=int(row['上映年份']),
+                month=int(row['上映月份']),
+                day=int(row['上映日期']),
+                length=float(row['电影时长']),
+                rating=float(row['电影评分']),
+                rating_number=int(row['打分人数']),
+                wishing_number=int(row['想看人数']),
+                box=int(row['累计票房']),
+                first_day_box=int(row['首日票房']),
+                first_week_box=int(row['首周票房'])
+            )
+            db.session.add(mymovie)
+            # print(mymovie.title)
 
     db.session.commit()
     click.echo('Done.')

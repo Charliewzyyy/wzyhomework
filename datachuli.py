@@ -4,7 +4,7 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error
 
-file_path = "C:\\Users\\ASUS\\wzyhomework\\爬虫.csv"
+file_path = "C:\\Users\\ASUS\\wzyhomework\\pachong.csv"
 df = pd.read_csv(file_path, encoding='gbk')
 
 # 找到电影类型的全集
