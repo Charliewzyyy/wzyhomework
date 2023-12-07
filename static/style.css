@@ -1,3 +1,17 @@
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1; /* 将伪元素放在最底层 */
+
+    /* 设置背景图片路径和透明度 */
+    background: url('images/background.png') center / cover no-repeat;
+    opacity: 0.15; /* 调整透明度 */
+}
+
 /* 页面整体 */
 body {
     margin: auto;
@@ -84,7 +98,7 @@ nav li a {
     display: block;
     color: white;
     text-align: center;
-    padding: 8px 12px;
+    padding: 12px 5px;
     text-decoration: none;
 }
 
@@ -93,7 +107,7 @@ nav li a:hover {
 }
 
 
-/* IMDb 链接 */
+/* 链接 */
 .float-right {
     float: right;
 }
@@ -119,14 +133,20 @@ input[type=text] {
 
 input[name=year],
 input[name=month],
-input[name=day] {
+input[name=day],
+input[name=length],
+input[name=rating]{
     width: 50px;
 }
 
 input[name=country],
 input[name=type],
 input[name=box],
-input[name=name] {
+input[name=name],
+input[name=rating_number],
+input[name=wishing_number],
+input[name=first_day_box],
+input[name=first_week_box]{
     width: 100px;
 }
 
