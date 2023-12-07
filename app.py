@@ -15,8 +15,17 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 
 import pandas as pd
+import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
+
+import matplotlib.pyplot as plt
+
+plt.rcParams['font.sans-serif'] = ['SimHei']  # 解决中文显示乱码问题
+plt.rcParams['axes.unicode_minus'] = False
+import warnings
+
+warnings.filterwarnings(action='ignore')
 
 ### 数据库配置
 WIN = sys.platform.startswith('win')
@@ -262,27 +271,20 @@ def edit_actor(actor_id):
     return render_template('edit_actor.html', actor=actor)
 
 
-# ### 删除影人
-# @app.route('/actor/delete_actor/<int:actor_id>', methods=['POST'])  # 限定只接受 POST 请求
-# @login_required  # 登录保护
-# def delete_actor(actor_id):
-#     actor = Actor.query.get_or_404(actor_id)
-#     db.session.delete(actor)
-#     db.session.commit()
-#     flash('影人成功删除~')
-#     return redirect(url_for('actor'))  # 重定向回主页
-
-
 ### 影人页
 @app.route('/actor', methods=['GET', 'POST'])  # 同时接受GET和POST请求
 def actor():
-    ### 创建影人条目
     if request.method == 'POST':  # 判断是否是 POST 请求
         if not current_user.is_authenticated:  # 仅需要禁止未登录用户创建新条目
             return redirect(url_for('index'))  # 重定向到主页
 
-    actors = Actor.query.all()  # 读取所有电影记录
-    return render_template('actor.html', actors=actors)
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+    all_actors = Actor.query.all()  # 读取所有影人记录
+    actors = Actor.query.paginate(page=page, per_page=per_page, error_out=False)
+    pagination = Pagination(page=page, total=actors.total, per_page=per_page, css_framework='bootstrap4')
+
+    return render_template('actor.html', actors=actors.items, pagination=pagination, all_actors=all_actors)
 
 
 ### 用户登录
@@ -494,8 +496,53 @@ def box_analyse():
 
 
 ### 票房预测
+@app.route('/box_predict', methods=['GET', 'POST'])
+def box_predict():
+    if request.method == 'POST':
+        # 获取表单数据
+        title = request.form['title']
+        category = request.form['category']
+        country = request.form['country']
+        year = request.form['year']
+        month = request.form['month']
+        day = request.form['day']
+        length = request.form['length']
+        rating = request.form['rating']
+        rating_number = request.form['rating_number']
+        wishing_number = request.form['wishing_number']
+        first_day_box = request.form['first_day_box']
+        first_week_box = request.form['first_week_box']
 
+        # 检查输入是否合规
+        if not title or not category or not country or not year or not month or not day or not length or not rating \
+                or not rating_number or not wishing_number or not first_day_box or not first_week_box\
+                or int(year) > 2024 or int(year) < 1900 or int(month) > 12 or int(month) < 0 or int(day) > 31 \
+                or int(day) < 0 or int(length) > 1000 or float(rating) > 10 or float(rating) < 0 or len(title) > 20 \
+                or len(country) > 10 or not_digits(year) or not_digits(month) or not_digits(day) or not_digits(length)\
+                or not_digits(rating) or not_digits(rating_number) or not_digits(wishing_number) \
+                or not_digits(first_day_box) or not_digits(first_week_box) or int(first_day_box) > int(first_week_box):
+            flash('输入错误！')
+            return redirect(url_for('box_predict'))  # 重定向回对应的编辑页面
 
+        # 数据处理
+        fieldnames = ["电影名称", "电影类型", "出品国家", "上映年份", "上映月份", "上映日期", "电影时长", "电影评分",
+                      "打分人数", "想看人数", "首日票房", "首周票房"]
+        new_movie = pd.DataFrame([[title, category, country, year, month, day, length, rating, rating_number,
+                                   wishing_number, first_day_box, first_week_box]], columns=fieldnames)
+        new_movie['电影类型'] = new_movie['电影类型'].apply(lambda x: set(x.split(',')))  # 处理电影类型
+        for category in all_categories:
+            new_movie[category] = new_movie['电影类型'].apply(lambda x: 1 if category in x else 0)
+        new_movie['出品国家'] = new_movie['出品国家'].apply(lambda x: set(x.split(',')))  # 处理出品国家
+        for country in all_countries:  # 生成哑变量
+            new_movie[country] = new_movie['出品国家'].apply(lambda x: 1 if country in x else 0)
+        new_movie['电影名称长度'] = new_movie['电影名称'].apply(len)
+        X = new_movie.drop(['电影类型', '电影名称', '出品国家'], axis=1)
+
+        predicted_box = model.predict(X)[0]
+
+        return render_template('box_predict.html', predicted_box=int(predicted_box))
+
+    return render_template('box_predict.html')
 
 
 ### 检查输入的字符串是否全都是汉字
@@ -548,6 +595,7 @@ class MovieActorRelation(db.Model):
                                                         passive_deletes=True))
     actor = db.relationship('Actor', backref=db.backref('movie_actor_relations', cascade='all, delete-orphan',
                                                         passive_deletes=True))
+
 
 class MyMovie(db.Model):  # 表名将会是 movie
     id = db.Column(db.Integer, primary_key=True)  # 主键
@@ -745,7 +793,10 @@ def forge():
         )
         db.session.add(relation)
 
-    with open("C:\\Users\\ASUS\\wzyhomework\\pachong.csv", "r", encoding='gbk') as csvfile:
+    # 添加票房信息
+    file_path = "C:\\Users\\ASUS\\wzyhomework\\pachong.csv"
+
+    with open(file_path, "r", encoding='gbk') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             mymovie = MyMovie(
@@ -766,5 +817,61 @@ def forge():
             db.session.add(mymovie)
             # print(mymovie.title)
 
-    db.session.commit()
-    click.echo('Done.')
+            db.session.commit()
+            click.echo('Done.')
+
+# 预先生成模型
+global model, all_categories, all_countries
+
+file_path = "C:\\Users\\ASUS\\wzyhomework\\pachong.csv"
+df = pd.read_csv(file_path, encoding='gbk')
+
+all_categories = set(','.join(df['电影类型']).split(','))  # 找到电影类型的全集
+df['电影类型'] = df['电影类型'].apply(lambda x: set(x.split(',')))  # 处理电影类型
+for category in all_categories:  # 生成哑变量
+    df[category] = df['电影类型'].apply(lambda x: 1 if category in x else 0)
+
+all_countries = set(','.join(df['出品国家']).split(','))  # 找到出品国家的全集
+df['出品国家'] = df['出品国家'].apply(lambda x: set(x.split(',')))  # 处理出品国家
+for country in all_countries:  # 生成哑变量
+    df[country] = df['出品国家'].apply(lambda x: 1 if country in x else 0)
+
+movie_data = df
+movie_data['电影名称长度'] = movie_data['电影名称'].apply(len)  # 添加电影名称长度
+
+x = df.drop(['电影类型', '电影名称', '出品国家', '累计票房'], axis=1)
+y = movie_data['累计票房']
+X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=123)
+
+err_test = []
+err_train = []
+K = np.arange(1, 100, 5)
+for D in K:
+    classifier = RandomForestRegressor(n_estimators=D, random_state=123)  # 设定随机森林分类器的模型参数
+    classifier.fit(X_train, y_train)
+    err_test.append(1 - classifier.score(X_test, y_test))
+    err_train.append(1 - classifier.score(X_train, y_train))
+    print(D)
+best_D = K[err_test.index(np.min(err_test))]
+
+model = RandomForestRegressor(n_estimators=best_D, random_state=123)
+model.fit(X_train, y_train)
+
+# fig = plt.figure(figsize=(20, 8))
+# plt.grid(True, linestyle='-.')
+# plt.plot(K, err_test, label="测试误差", linestyle='-')
+# plt.plot(K, err_train, label="训练误差", linestyle='-')
+# plt.title('随机森林的拟合优度%.9f(最优参数K=%d)' % ((1 - err_test[err_test.index(np.min(err_test))]), best_D),
+#           fontsize=14)
+# plt.xlabel("depth", fontsize=14)
+# plt.ylabel("误差（1-R方）", fontsize=14)
+# plt.legend(fontsize=12)
+# plt.legend()
+# plt.show()
+
+feature_importances = model.feature_importances_
+print("特征重要性:", feature_importances)
+# base_estimators = model.estimators_
+# print("基础决策树列表:", base_estimators)
+r2_score = model.score(X_test, y_test)
+print("模型在测试集上的R²得分:", r2_score)

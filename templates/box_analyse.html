@@ -4,23 +4,20 @@
   <h3>票房分析</h3>
 
   <form method="post">
-    电影名称：<input type="text" name="title" required>
+    电影名称：<input type="text" name="title" autocomplete="on" required value="{{ request.form['title'] }}">
     <input type="submit" value="查询">
     <br>
     {% if movie %}
-    <p>电影名称：{{ movie.title }}</p>
     <p>电影类型：{{ movie.type }}</p>
     <p>出品国家：{{ movie.country }}</p>
-    <p>上映年份：{{ movie.year }}年</p>
-    <p>上映月份：{{ movie.month }}月</p>
-    <p>上映日期：{{ movie.day }}日</p>
+    <p>上映时间：{{ movie.year }}年{{ movie.month }}月{{ movie.day }}日</p>
     <p>电影时长：{{ movie.length }}分钟</p>
     <p>电影评分：{{ movie.rating }}分(满分10分)</p>
     <p>打分人数：{{ movie.rating_number }}人</p>
     <p>想看人数：{{ movie.wishing_number }}人</p>
-    <p>累计票房：{{ movie.box }}万</p>
-    <p>首日票房：{{ movie.first_day_box }}万</p>
-    <p>首周票房：{{ movie.first_week_box }}万</p>
+    <p>累计票房：{{ movie.box }}万元</p>
+    <p>首日票房：{{ movie.first_day_box }}万元</p>
+    <p>首周票房：{{ movie.first_week_box }}万元</p>
     <a class="imdb" href="https://movie.douban.com/subject_search?search_text={{ movie.title }}" target="_blank" title="在 豆瓣网 中查询该电影">更多电影信息</a>
     <a class="imdb" href="https://ys.endata.cn/DataMarket/Search?key={{ movie.title }}" target="_blank" title="在 艺恩娱数 中查询该电影票房分析">更多专业分析</a>
     <br>

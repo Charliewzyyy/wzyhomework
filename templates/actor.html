@@ -2,7 +2,8 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<p>总计有{{ actors|length }}位导演或主演</p>
+<p>总计有{{ all_actors|length }}位导演或主演</p>
+
 <ul class="actor-list">
     {% for actor in actors %}
     <li>{{ actor.name }} - {{ actor.gender }} - {{ actor.country }}
@@ -17,3 +18,24 @@
     {% endfor %}
 </ul>
 {% endblock %}
+
+{% block pagination %}
+<div class="pagination">
+    当前为：第{{ pagination.page }}页
+    <br>
+    <ul class="pagination">
+        跳转至：
+        {% for page_num in pagination.pages %}
+            {% if page_num %}
+                {% if page_num != pagination.page %}
+                    <li class="page-item"><a class="page-link" href="{{ url_for('actor', page=page_num) }}">第{{ page_num }}页</a></li>
+                {% endif %}
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+            {% endif %}
+        {% endfor %}
+    </ul>
+</div>
+
+{% endblock %}
+

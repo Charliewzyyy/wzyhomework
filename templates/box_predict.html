@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h3>预测电影票房</h3>
+  <form method="post">
+    <br>
+    电影名称 <input type="text" name="title" autocomplete="on" required value="{{ request.form['title'] }}">
+    <br><br>
+    电影类型(如有多种电影类型请用英文,分开;如:爱情,校园) <input type="text" name="category" autocomplete="on" required value="{{ request.form['category'] }}">
+    <br><br>
+    出品国家(如有多个出品国家请用英文,分开;如:中国,美国) <input type="text" name="country" autocomplete="on" required value="{{ request.form['country'] }}">
+    <br><br>
+    上映年份(请填入数字,如:2019) <input type="text" name="year" autocomplete="on" required value="{{ request.form['year'] }}">
+    <br><br>
+    上映月份(请填入数字,如:7) <input type="text" name="month" autocomplete="on" required value="{{ request.form['month'] }}">
+    <br><br>
+    上映日期(请填入数字,如:12) <input type="text" name="day" autocomplete="on" required value="{{ request.form['day'] }}">
+    <br><br>
+    电影时长(请填入数字,如:119) <input type="text" name="length" autocomplete="on" required value="{{ request.form['length'] }}">
+    <br><br>
+    电影评分(请填入数字,如:9.3) <input type="text" name="rating" autocomplete="on" required value="{{ request.form['rating'] }}">
+    <br><br>
+    评分人数(请填入数字,如:143686) <input type="text" name="rating_number" autocomplete="on" required value="{{ request.form['rating_number'] }}">
+    <br><br>
+    想看人数(请填入数字,如:364326) <input type="text" name="wishing_number" autocomplete="on" required value="{{ request.form['wishing_number'] }}">
+    <br><br>
+    第一天票房(请填入数字,如:46394)(单位为万元) <input type="text" name="first_day_box" autocomplete="on" required value="{{ request.form['first_day_box'] }}">万元
+    <br><br>
+    第一周票房(请填入数字,如:5283817)(单位为万元) <input type="text" name="first_week_box" autocomplete="on" required value="{{ request.form['first_week_box'] }}">万元
+    <br><br>
+    <input type="submit" value="预测">
+    <br>
+    <p>预测票房：{{ predicted_box }}万元</p>
+    <br>
+  </form>
+  </script>
+{% endblock %}
