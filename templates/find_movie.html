@@ -9,17 +9,19 @@
     <br>
     {% if movie %}
     <p>电影名称：{{ movie.title }}</p>
-    <p>上映年份：{{ movie.year }}</p>
-    <p>上映月份：{{ movie.month }}</p>
-    <p>上映日期：{{ movie.day }}</p>
+    <p>上映年份：{{ movie.year }}年</p>
+    <p>上映月份：{{ movie.month }}月</p>
+    <p>上映日期：{{ movie.day }}日</p>
     <p>出品国家：{{ movie.country }}</p>
     <p>电影类型：{{ movie.type }}</p>
-    <a class="imdb" href="https://movie.douban.com/subject_search?search_text={{ movie.title }}" target="_blank" title="在 豆瓣网 中查询该电影">更多信息</a>
-    <p>电影票房：{{ movie.box }}亿</p>
-    <a class="imdb" href="https://ys.endata.cn/DataMarket/Search?key={{ movie.title }}" target="_blank" title="在 艺恩娱数 中查询该电影票房分析">票房分析</a>
+    <a class="go_web" href="https://movie.douban.com/subject_search?search_text={{ movie.title }}" target="_blank"
+       title="在 豆瓣网 中查询该电影">更多信息</a>
+    <p>电影票房：{{ movie.box }}亿元</p>
+    <a class="go_web" href="https://ys.endata.cn/DataMarket/Search?key={{ movie.title }}" target="_blank"
+       title="在 艺恩娱数 中查询该电影票房分析">票房分析</a>
     <p>导演：{{ director_name }}</p>
     <p>主演：{{ star_name }}</p>
-    <br>
+    <a class="go_web" href="/movie/edit/{{ movie.id }}" target="_blank">我要编辑</a>
     {% endif %}
   </form>
 {% endblock %}

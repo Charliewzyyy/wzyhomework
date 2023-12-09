@@ -18,8 +18,8 @@
     <p>累计票房：{{ movie.box }}万元</p>
     <p>首日票房：{{ movie.first_day_box }}万元</p>
     <p>首周票房：{{ movie.first_week_box }}万元</p>
-    <a class="imdb" href="https://movie.douban.com/subject_search?search_text={{ movie.title }}" target="_blank" title="在 豆瓣网 中查询该电影">更多电影信息</a>
-    <a class="imdb" href="https://ys.endata.cn/DataMarket/Search?key={{ movie.title }}" target="_blank" title="在 艺恩娱数 中查询该电影票房分析">更多专业分析</a>
+    <a class="go_web" href="https://movie.douban.com/subject_search?search_text={{ movie.title }}" target="_blank" title="在 豆瓣网 中查询该电影">更多电影信息</a>
+    <a class="go_web" href="https://ys.endata.cn/DataMarket/Search?key={{ movie.title }}" target="_blank" title="在 艺恩娱数 中查询该电影票房分析">更多专业分析</a>
     <br>
     {% endif %}
   </form>

@@ -11,24 +11,38 @@
     <p>姓名：{{ actor.name }}</p>
     <p>性别：{{ actor.gender }}</p>
     <p>国籍：{{ actor.country }}</p>
+    <a class="go_web" href="/actor/edit_actor/{{ actor.id }}" target="_blank">编辑影人信息</a>
+    <br><br>
 
-    {% if director_movie_names != ['无'] %}
-    {% for director_movie_name in director_movie_names %}
-    <p>在{{ director_movie_name }}中担任导演</p>
-    {% endfor %}
-    {% else %}
-    <p>没有担任过电影的导演</p>
-    {% endif %}
+    <ul class="movie-list">
+      {% if director_movie_names != ['无'] %}
+        {% for director_movie_name in director_movie_names %}
+          <li> 在 {{ director_movie_name }} 中担任导演
+            <span class="float-right">
+              <a class="go_web" href="/movie/edit/{{ get_movie_id_by_title(movies, director_movie_name) }}"
+                 target="_blank">编辑该电影信息</a>
+            </span>
+          </li>
+        {% endfor %}
+      {% else %}
+        <p>没有担任过任何电影的导演</p>
+      {% endif %}
+    </ul>
 
-    {% if star_movie_names != ['无'] %}
-    {% for star_movie_name in star_movie_names %}
-    <p>在{{ star_movie_name }}中担任主演</p>
-    {% endfor %}
-    {% else %}
-    <p>没有担任过电影的主演</p>
-    {% endif %}
-
-    <br>
+    <ul class="movie-list">
+      {% if star_movie_names != ['无'] %}
+        {% for star_movie_name in star_movie_names %}
+          <li> 在 {{ star_movie_name }} 中担任主演
+            <span class="float-right">
+              <a class="go_web" href="/movie/edit/{{ get_movie_id_by_title(movies, star_movie_name) }}"
+                 target="_blank">编辑该电影信息</a>
+            </span>
+          </li>
+        {% endfor %}
+      {% else %}
+        <p>没有担任过任何电影的主演</p>
+      {% endif %}
+    </ul>
     {% endif %}
   </form>
 {% endblock %}

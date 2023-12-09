@@ -456,6 +456,14 @@ def find_movie():
     return render_template('find_movie.html')
 
 
+### 查询影人辅助函数
+def get_movie_id_by_title(movies, title):
+    for movie in movies:
+        if movie.title == title:
+            return movie.id
+    return None
+
+
 ### 查询影人
 @app.route('/find_actor', methods=['GET', 'POST'])
 def find_actor():
@@ -473,8 +481,12 @@ def find_actor():
             star_relations = MovieActorRelation.query.filter_by(actor_id=actor.id, relation_type='主演').all()
             star_movie_names = [Movie.query.get(relation.movie_id).title for relation in star_relations] \
                 if star_relations else ['无']
-            return render_template('find_actor.html', actor=actor,
-                                   director_movie_names=director_movie_names, star_movie_names=star_movie_names)
+
+            movies = Movie.query.all()
+
+            return render_template('find_actor.html', actor=actor, movies=movies,
+                                   director_movie_names=director_movie_names, star_movie_names=star_movie_names,
+                                   get_movie_id_by_title=get_movie_id_by_title)
 
     return render_template('find_actor.html')
 
