@@ -829,8 +829,8 @@ def forge():
             db.session.add(mymovie)
             # print(mymovie.title)
 
-            db.session.commit()
-            click.echo('Done.')
+    db.session.commit()
+    click.echo('Done.')
 
 # 预先生成模型
 global model, all_categories, all_countries
@@ -853,11 +853,11 @@ movie_data['电影名称长度'] = movie_data['电影名称'].apply(len)  # 添�
 
 x = df.drop(['电影类型', '电影名称', '出品国家', '累计票房'], axis=1)
 y = movie_data['累计票房']
-X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=123)
+X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.25, random_state=123)
 
 err_test = []
 err_train = []
-K = np.arange(1, 100, 5)
+K = np.arange(1, 50, 5)
 for D in K:
     classifier = RandomForestRegressor(n_estimators=D, random_state=123)  # 设定随机森林分类器的模型参数
     classifier.fit(X_train, y_train)

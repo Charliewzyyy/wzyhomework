@@ -6,7 +6,7 @@
     <br>
     {# 注意加上了id 为了之后的JavaScript #}
     姓名 <input type="text" name="name" id='actorName' autocomplete="on" required>
-    <a class="go_web" href="#" id="searchLink" title="在豆瓣网中查询此人" onclick="searchDouban()">豆瓣网</a>
+    <a class="go_web" href="#" id="searchLink" title="在豆瓣网中查询此人" onclick="searchDouban()">查看更多详情</a>
     <br><br>
     性别(男/女) <input type="text" name="gender" autocomplete="on" required>
     <br><br>
@@ -21,5 +21,5 @@
       var doubanLink = 'https://movie.douban.com/celebrities/search?search_text=' + encodeURIComponent(name);
       window.open(doubanLink, '_blank');
     }
-</script>
+ </script>
 {% endblock %}
